@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Schedule Builder Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --orange-600: #F26B21;
+  --orange-500: #F47B3B;
+  --orange-400: #F69A5E;
+  --orange-100: #FEF0E6;
+  --navy-900: #1B2A4A;
+  --navy-800: #243558;
+  --navy-700: #2D4166;
+  --navy-600: #3A5078;
+  --gray-900: #1A1D26;
+  --gray-800: #2A2E3A;
+  --gray-700: #3D4255;
+  --gray-600: #555B6E;
+  --gray-500: #6E7489;
+  --gray-400: #9197AB;
+  --gray-300: #B8BDD0;
+  --gray-200: #D6DAE5;
+  --gray-100: #ECEEF4;
+  --gray-50: #F5F6FA;
+  --white: #FFFFFF;
+  --green-600: #16A34A;
+  --green-100: #DCFCE7;
+  --red-600: #DC2626;
+  --red-100: #FEE2E2;
+  --blue-600: #2563EB;
+  --blue-100: #DBEAFE;
+  --yellow-500: #EAB308;
+  --yellow-100: #FEF9C3;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --shadow-sm: 0 1px 2px rgba(27,42,74,0.06);
+  --shadow-md: 0 4px 12px rgba(27,42,74,0.08);
+  --shadow-lg: 0 8px 30px rgba(27,42,74,0.12);
+  --transition: 150ms cubic-bezier(0.4,0,0.2,1);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'DM Sans', -apple-system, sans-serif;
+  background: var(--gray-50);
+  color: var(--gray-900);
+  min-height: 100vh;
+}
+
+/* ─── TOP NAV ─── */
+.topnav {
+  background: var(--navy-900);
+  height: 56px;
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+.topnav-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--white);
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: -0.3px;
+}
+.topnav-logo .icon {
+  width: 32px;
+  height: 32px;
+  background: var(--orange-600);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+.topnav-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+}
+.topnav-tab {
+  color: var(--gray-400);
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  border: none;
+  background: none;
+}
+.topnav-tab:hover { color: var(--gray-200); background: rgba(255,255,255,0.06); }
+.topnav-tab.active { color: var(--white); background: rgba(255,255,255,0.1); }
+.topnav-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* ─── PAGE HEADER ─── */
+.page-header {
+  background: var(--white);
+  border-bottom: 1px solid var(--gray-200);
+  padding: 20px 32px;
+}
+.page-header-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.page-title-group { display: flex; align-items: center; gap: 12px; }
+.page-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--gray-900);
+  letter-spacing: -0.5px;
+}
+.badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.badge-draft { background: var(--yellow-100); color: #92400E; }
+.badge-active { background: var(--green-100); color: #166534; }
+.page-actions { display: flex; gap: 8px; }
+
+/* ─── BUTTONS ─── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  border: none;
+  white-space: nowrap;
+}
+.btn-primary { background: var(--orange-600); color: var(--white); }
+.btn-primary:hover { background: var(--orange-500); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(242,107,33,0.3); }
+.btn-secondary { background: var(--white); color: var(--gray-700); border: 1px solid var(--gray-300); }
+.btn-secondary:hover { background: var(--gray-50); border-color: var(--gray-400); }
+.btn-danger { background: var(--white); color: var(--red-600); border: 1px solid var(--gray-300); }
+.btn-danger:hover { background: var(--red-100); border-color: var(--red-600); }
+.btn-ghost { background: transparent; color: var(--gray-600); }
+.btn-ghost:hover { background: var(--gray-100); color: var(--gray-900); }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+.btn-icon {
+  width: 34px; height: 34px; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: var(--radius-sm);
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  color: var(--gray-500);
+  cursor: pointer;
+  transition: var(--transition);
+}
+.btn-icon:hover { background: var(--gray-50); color: var(--gray-900); border-color: var(--gray-400); }
+
+/* ─── LAYOUT ─── */
+.main-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px 32px 60px;
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 24px;
+}
+@media (max-width: 1024px) {
+  .main-content { grid-template-columns: 1fr; }
+}
+
+/* ─── CARDS ─── */
+.card {
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+.card-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--gray-100);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.card-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--gray-800);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.card-body { padding: 16px 20px; }
+
+/* ─── SIDEBAR ─── */
+.sidebar { display: flex; flex-direction: column; gap: 20px; }
+
+/* ─── FORM ELEMENTS ─── */
+.form-group { margin-bottom: 14px; }
+.form-group:last-child { margin-bottom: 0; }
+.form-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray-600);
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.form-input, .form-select {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--gray-900);
+  background: var(--white);
+  transition: var(--transition);
+}
+.form-input:focus, .form-select:focus {
+  outline: none;
+  border-color: var(--orange-600);
+  box-shadow: 0 0 0 3px rgba(242,107,33,0.1);
+}
+.form-input::placeholder { color: var(--gray-400); }
+.form-input-mono {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+}
+
+/* ─── PRODUCTION RATE TABLE ─── */
+.rate-table { width: 100%; }
+.rate-row {
+  display: flex;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--gray-100);
+  gap: 10px;
+}
+.rate-row:last-child { border-bottom: none; }
+.rate-check {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--orange-600);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.rate-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gray-800);
+  flex: 1;
+  min-width: 70px;
+}
+.rate-input {
+  width: 90px;
+  padding: 6px 8px;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--gray-900);
+  text-align: right;
+  transition: var(--transition);
+}
+.rate-input:focus {
+  outline: none;
+  border-color: var(--orange-600);
+  box-shadow: 0 0 0 3px rgba(242,107,33,0.1);
+}
+.rate-unit {
+  font-size: 11px;
+  color: var(--gray-500);
+  white-space: nowrap;
+}
+
+/* ─── PHASE TABLE ─── */
+.phase-table { width: 100%; border-collapse: collapse; }
+.phase-table th {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--gray-500);
+  padding: 10px 12px;
+  text-align: left;
+  background: var(--gray-50);
+  border-bottom: 1px solid var(--gray-200);
+}
+.phase-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--gray-100);
+  vertical-align: middle;
+}
+.phase-table tr:hover td { background: var(--gray-50); }
+.phase-table .phase-name-input {
+  border: 1px solid transparent;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--gray-900);
+  width: 100%;
+  background: transparent;
+  transition: var(--transition);
+}
+.phase-table .phase-name-input:hover { border-color: var(--gray-200); background: var(--gray-50); }
+.phase-table .phase-name-input:focus { border-color: var(--orange-600); outline: none; background: var(--white); box-shadow: 0 0 0 3px rgba(242,107,33,0.1); }
+.phase-table .phase-yards-input {
+  border: 1px solid transparent;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--gray-900);
+  width: 100px;
+  text-align: right;
+  background: transparent;
+  transition: var(--transition);
+}
+.phase-table .phase-yards-input:hover { border-color: var(--gray-200); background: var(--gray-50); }
+.phase-table .phase-yards-input:focus { border-color: var(--orange-600); outline: none; background: var(--white); box-shadow: 0 0 0 3px rgba(242,107,33,0.1); }
+.phase-drag-handle {
+  cursor: grab;
+  color: var(--gray-400);
+  font-size: 14px;
+  padding: 4px;
+  user-select: none;
+}
+.phase-drag-handle:active { cursor: grabbing; }
+.phase-number {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--navy-800);
+  color: var(--white);
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ─── SCHEDULE OUTPUT TABLE ─── */
+.schedule-table { width: 100%; border-collapse: collapse; }
+.schedule-table th {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--gray-500);
+  padding: 10px 14px;
+  text-align: left;
+  background: var(--gray-50);
+  border-bottom: 2px solid var(--gray-200);
+  position: sticky;
+  top: 0;
+}
+.schedule-table td {
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--gray-100);
+  font-size: 13px;
+}
+.schedule-table tr:hover td { background: rgba(242,107,33,0.03); }
+.schedule-table .phase-group td { 
+  background: var(--gray-50);
+  font-weight: 700;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: var(--gray-700);
+  border-bottom: 1px solid var(--gray-200);
+}
+.task-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.task-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.task-dot-scaffold { background: var(--navy-800); }
+.task-dot-lath { background: var(--blue-600); }
+.task-dot-scratch { background: var(--orange-600); }
+.task-dot-cure { background: var(--gray-400); }
+.task-dot-brown { background: var(--yellow-500); }
+.task-dot-finish { background: var(--green-600); }
+.mono { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+.text-right { text-align: right; }
+.text-muted { color: var(--gray-500); }
+
+/* ─── GANTT CHART ─── */
+.gantt-container {
+  overflow-x: auto;
+  padding: 16px 20px 20px;
+}
+.gantt-header-row {
+  display: flex;
+  border-bottom: 1px solid var(--gray-200);
+  margin-bottom: 2px;
+  padding-left: 180px;
+}
+.gantt-date-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  text-align: center;
+  border-left: 1px solid var(--gray-100);
+  padding: 4px 0;
+}
+.gantt-row {
+  display: flex;
+  align-items: center;
+  min-height: 30px;
+  position: relative;
+}
+.gantt-label {
+  width: 180px;
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gray-700);
+  padding-right: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gantt-track {
+  flex: 1;
+  position: relative;
+  height: 22px;
+}
+.gantt-bar {
+  position: absolute;
+  height: 20px;
+  border-radius: 4px;
+  top: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--white);
+  min-width: 4px;
+  transition: opacity 150ms;
+  cursor: default;
+}
+.gantt-bar:hover { opacity: 0.85; }
+.gantt-bar-scaffold { background: var(--navy-800); }
+.gantt-bar-lath { background: var(--blue-600); }
+.gantt-bar-scratch { background: var(--orange-600); }
+.gantt-bar-cure { background: var(--gray-400); background: repeating-linear-gradient(45deg, var(--gray-300), var(--gray-300) 3px, var(--gray-400) 3px, var(--gray-400) 6px); color: var(--gray-700); }
+.gantt-bar-brown { background: var(--yellow-500); color: var(--gray-900); }
+.gantt-bar-finish { background: var(--green-600); }
+.gantt-phase-header {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gray-700);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  padding: 10px 0 4px 0;
+  border-bottom: 1px solid var(--gray-100);
+  margin-top: 4px;
+}
+.gantt-today-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--red-600);
+  z-index: 5;
+  pointer-events: none;
+}
+.gantt-today-label {
+  position: absolute;
+  top: -16px;
+  transform: translateX(-50%);
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--red-600);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.gantt-weekend {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.02);
+  pointer-events: none;
+}
+
+/* ─── TABS ─── */
+.view-tabs {
+  display: flex;
+  gap: 2px;
+  background: var(--gray-100);
+  padding: 3px;
+  border-radius: var(--radius-md);
+  width: fit-content;
+}
+.view-tab {
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: var(--transition);
+  background: transparent;
+  color: var(--gray-600);
+  font-family: inherit;
+}
+.view-tab.active { background: var(--white); color: var(--gray-900); box-shadow: var(--shadow-sm); }
+.view-tab:hover:not(.active) { color: var(--gray-800); }
+
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* ─── SUMMARY STATS ─── */
+.stats-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.stat-card {
+  flex: 1;
+  min-width: 120px;
+  background: var(--gray-50);
+  border: 1px solid var(--gray-100);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+}
+.stat-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--gray-900);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.stat-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+/* ─── TOOLTIPS ─── */
+.tooltip {
+  position: absolute;
+  background: var(--gray-900);
+  color: var(--white);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  pointer-events: none;
+  z-index: 200;
+  box-shadow: var(--shadow-lg);
+  white-space: nowrap;
+  display: none;
+}
+
+/* ─── EMPTY STATE ─── */
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--gray-500);
+}
+.empty-state-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.5; }
+.empty-state-text { font-size: 14px; font-weight: 500; }
+.empty-state-sub { font-size: 13px; color: var(--gray-400); margin-top: 6px; }
+
+/* ─── ANIMATIONS ─── */
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+.animate-in { animation: fadeIn 300ms cubic-bezier(0.4,0,0.2,1) forwards; }
+
+/* ─── SCROLLBAR ─── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--gray-400); }
+</style>
+</head>
+<body>
+
+<!-- ─── TOP NAV ─── -->
+<nav class="topnav">
+  <div class="topnav-logo">
+    <div class="icon">📐</div>
+    Schedule Builder Pro
+  </div>
+  <div class="topnav-center">
+    <button class="topnav-tab active">Schedule</button>
+    <button class="topnav-tab">Reports</button>
+    <button class="topnav-tab">Settings</button>
+  </div>
+  <div class="topnav-right">
+    <button class="btn btn-sm btn-secondary" style="border-color: rgba(255,255,255,0.15); color: var(--gray-300);" onclick="exportCalendarSchedule()">⬇ Export CSV</button>
+  </div>
+</nav>
+
+<!-- ─── PAGE HEADER ─── -->
+<div class="page-header">
+  <div class="page-header-inner">
+    <div class="page-title-group">
+      <h1 class="page-title">Schedule Duration Builder</h1>
+      <span class="badge badge-draft" id="status-badge">Draft</span>
+    </div>
+    <div class="page-actions">
+      <button class="btn btn-secondary" onclick="resetAll()">↺ Reset</button>
+      <button class="btn btn-primary" onclick="calculateSchedule()">▶ Calculate Schedule</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── MAIN CONTENT ─── -->
+<div class="main-content">
+  <!-- ─── SIDEBAR ─── -->
+  <div class="sidebar">
+    <!-- Schedule Settings -->
+    <div class="card animate-in">
+      <div class="card-header">
+        <span class="card-title">Schedule Settings</span>
+      </div>
+      <div class="card-body">
+        <div class="form-group">
+          <label class="form-label">Scaffolding Start Date</label>
+          <input type="date" class="form-input form-input-mono" id="scaff-start-date" onchange="calculateSchedule()" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Lath Start Date</label>
+          <input type="date" class="form-input form-input-mono" id="lath-start-date" onchange="calculateSchedule()" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Production Rates -->
+    <div class="card animate-in" style="animation-delay: 60ms;">
+      <div class="card-header">
+        <span class="card-title">Production Rates</span>
+        <span style="font-size: 11px; color: var(--gray-400);">yards/day</span>
+      </div>
+      <div class="card-body">
+        <div class="rate-table" id="rate-table">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="card animate-in" style="animation-delay: 120ms;">
+      <div class="card-header">
+        <span class="card-title">Summary</span>
+      </div>
+      <div class="card-body">
+        <div class="stats-row" id="summary-stats">
+          <div class="stat-card">
+            <div class="stat-value" id="stat-phases">0</div>
+            <div class="stat-label">Phases</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-yards">0</div>
+            <div class="stat-label">Total Yards</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-days">—</div>
+            <div class="stat-label">Calendar Days</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── MAIN AREA ─── -->
+  <div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Phase Definitions -->
+    <div class="card animate-in" style="animation-delay: 80ms;">
+      <div class="card-header">
+        <span class="card-title">Phase Definitions</span>
+        <button class="btn btn-primary btn-sm" onclick="addPhase()">+ Add Phase</button>
+      </div>
+      <div style="overflow-x: auto;">
+        <table class="phase-table">
+          <thead>
+            <tr>
+              <th style="width: 40px;"></th>
+              <th style="width: 36px;">#</th>
+              <th>Phase Name</th>
+              <th style="width: 130px; text-align: right;">Total Yards</th>
+              <th style="width: 60px;"></th>
+            </tr>
+          </thead>
+          <tbody id="phases-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Schedule Output -->
+    <div class="card animate-in" style="animation-delay: 160ms;" id="output-card">
+      <div class="card-header">
+        <span class="card-title">Calculated Schedule</span>
+        <div class="view-tabs">
+          <button class="view-tab active" onclick="switchView('table', this)">Table</button>
+          <button class="view-tab" onclick="switchView('gantt', this)">Gantt</button>
+          <button class="view-tab" onclick="switchView('calendar', this)">Calendar</button>
+        </div>
+      </div>
+
+      <!-- Table View -->
+      <div class="tab-content active" id="view-table">
+        <div style="overflow-x: auto;">
+          <table class="schedule-table">
+            <thead>
+              <tr>
+                <th>Phase</th>
+                <th>Task</th>
+                <th style="text-align: right;">Quantity</th>
+                <th style="text-align: right;">Rate</th>
+                <th style="text-align: right;">Duration</th>
+                <th>Start</th>
+                <th>End</th>
+              </tr>
+            </thead>
+            <tbody id="output-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Gantt View -->
+      <div class="tab-content" id="view-gantt">
+        <div class="gantt-container" id="gantt-container">
+          <div class="empty-state">
+            <div class="empty-state-icon">📊</div>
+            <div class="empty-state-text">Set start dates to view Gantt chart</div>
+            <div class="empty-state-sub">Enter scaffolding and lath start dates in Schedule Settings</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Calendar View -->
+      <div class="tab-content" id="view-calendar">
+        <div style="overflow-x: auto;">
+          <table class="schedule-table">
+            <thead>
+              <tr>
+                <th>Phase</th>
+                <th>Task</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th style="text-align: right;">Work Days</th>
+              </tr>
+            </thead>
+            <tbody id="calendar-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Note -->
+      <div style="padding: 12px 20px; border-top: 1px solid var(--gray-100); font-size: 12px; color: var(--gray-500); line-height: 1.5;">
+        Durations are rounded up to the nearest whole day. Scaffolding occurs before lath; finish occurs after brown. 
+        Cure periods of <strong>2 calendar days</strong> (scratch → brown) and <strong>7 calendar days</strong> (brown → finish) are automatically inserted.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tooltip -->
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+// ─── STATE ───
+const DEFAULT_RATES = [
+  { id: 'scaffold', label: 'Scaffolding', rate: 1000, included: true, color: 'scaffold' },
+  { id: 'lath', label: 'Lath', rate: 180, included: true, color: 'lath' },
+  { id: 'scratch', label: 'Scratch', rate: 1400, included: true, color: 'scratch' },
+  { id: 'brown', label: 'Brown', rate: 700, included: true, color: 'brown' },
+  { id: 'finish', label: 'Finish', rate: 500, included: true, color: 'finish' },
+];
+
+let rates = JSON.parse(JSON.stringify(DEFAULT_RATES));
+let phases = [{ name: 'Phase 1', totalYards: 0 }];
+let calendarData = []; // Store calendar results for Gantt
+
+// ─── INIT ───
+window.onload = function() {
+  renderRates();
+  renderPhases();
+  calculateSchedule();
+};
+
+// ─── RENDER RATES ───
+function renderRates() {
+  const container = document.getElementById('rate-table');
+  container.innerHTML = '';
+  rates.forEach((r, i) => {
+    const row = document.createElement('div');
+    row.className = 'rate-row';
+    row.innerHTML = `
+      <input type="checkbox" class="rate-check" ${r.included ? 'checked' : ''} 
+        onchange="rates[${i}].included=this.checked; calculateSchedule();" />
+      <span class="task-dot task-dot-${r.color}"></span>
+      <span class="rate-label">${r.label}</span>
+      <input type="number" class="rate-input" value="${r.rate}" min="0"
+        oninput="rates[${i}].rate=parseFloat(this.value)||0; calculateSchedule();" />
+      <span class="rate-unit">yd/d</span>
+    `;
+    container.appendChild(row);
+  });
+}
+
+// ─── RENDER PHASES ───
+function renderPhases() {
+  const tbody = document.getElementById('phases-body');
+  tbody.innerHTML = '';
+  phases.forEach((phase, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="width:40px;"><span class="phase-drag-handle" title="Drag to reorder">⠿</span></td>
+      <td style="width:36px;"><span class="phase-number">${i + 1}</span></td>
+      <td><input class="phase-name-input" value="${escapeHtml(phase.name)}" 
+        oninput="phases[${i}].name=this.value; calculateSchedule();" /></td>
+      <td style="text-align:right;">
+        <input class="phase-yards-input" type="number" min="0" value="${phase.totalYards}"
+          oninput="phases[${i}].totalYards=parseFloat(this.value)||0; calculateSchedule();" />
+      </td>
+      <td style="text-align:center;">
+        ${phases.length > 1 ? `<button class="btn-icon btn-sm" title="Remove phase" onclick="removePhase(${i})">✕</button>` : ''}
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+  updateSummary();
+}
+
+function addPhase() {
+  phases.push({ name: `Phase ${phases.length + 1}`, totalYards: 0 });
+  renderPhases();
+}
+
+function removePhase(i) {
+  phases.splice(i, 1);
+  renderPhases();
+}
+
+function resetAll() {
+  rates = JSON.parse(JSON.stringify(DEFAULT_RATES));
+  phases = [{ name: 'Phase 1', totalYards: 0 }];
+  document.getElementById('scaff-start-date').value = '';
+  document.getElementById('lath-start-date').value = '';
+  renderRates();
+  renderPhases();
+  calculateSchedule();
+}
+
+// ─── CALCULATE SCHEDULE ───
+function calculateSchedule() {
+  const outputBody = document.getElementById('output-body');
+  outputBody.innerHTML = '';
+
+  const rateMap = {};
+  rates.forEach(r => { rateMap[r.id] = r; });
+
+  phases.forEach((phase) => {
+    const qty = parseFloat(phase.totalYards) || 0;
+    if (qty <= 0) return;
+
+    // Phase group header
+    const groupRow = document.createElement('tr');
+    groupRow.className = 'phase-group';
+    groupRow.innerHTML = `<td colspan="7">${escapeHtml(phase.name)} — ${qty.toLocaleString()} yards</td>`;
+    outputBody.appendChild(groupRow);
+
+    const taskDefs = [
+      { id: 'scaffold', label: 'Scaffolding', cure: 0 },
+      { id: 'lath', label: 'Lath', cure: 0 },
+      { id: 'scratch', label: 'Scratch', cure: 2, cureLabel: 'Cure (after Scratch)' },
+      { id: 'brown', label: 'Brown', cure: 7, cureLabel: 'Cure (after Brown)' },
+      { id: 'finish', label: 'Finish', cure: 0 },
+    ];
+
+    taskDefs.forEach(task => {
+      const r = rateMap[task.id];
+      if (!r.included || r.rate <= 0) return;
+      const days = Math.ceil(qty / r.rate);
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td></td>
+        <td><span class="task-badge"><span class="task-dot task-dot-${r.color}"></span>${task.label}</span></td>
+        <td class="text-right mono">${qty.toLocaleString()}</td>
+        <td class="text-right mono">${r.rate.toLocaleString()}</td>
+        <td class="text-right mono">${days} day${days !== 1 ? 's' : ''}</td>
+        <td class="text-muted">—</td>
+        <td class="text-muted">—</td>
+      `;
+      outputBody.appendChild(tr);
+
+      if (task.cure > 0) {
+        const cureTr = document.createElement('tr');
+        cureTr.innerHTML = `
+          <td></td>
+          <td><span class="task-badge"><span class="task-dot task-dot-cure"></span>${task.cureLabel}</span></td>
+          <td class="text-right mono text-muted">—</td>
+          <td class="text-right mono text-muted">—</td>
+          <td class="text-right mono">${task.cure} day${task.cure !== 1 ? 's' : ''}</td>
+          <td class="text-muted">—</td>
+          <td class="text-muted">—</td>
+        `;
+        outputBody.appendChild(cureTr);
+      }
+    });
+  });
+
+  updateSummary();
+  buildCalendarSchedule();
+}
+
+// ─── SUMMARY ───
+function updateSummary() {
+  document.getElementById('stat-phases').textContent = phases.length;
+  const totalYards = phases.reduce((sum, p) => sum + (parseFloat(p.totalYards) || 0), 0);
+  document.getElementById('stat-yards').textContent = totalYards.toLocaleString();
+
+  // Calendar days computed after calendar build
+  const badge = document.getElementById('status-badge');
+  const hasYards = phases.some(p => p.totalYards > 0);
+  const hasDate = document.getElementById('scaff-start-date').value && document.getElementById('lath-start-date').value;
+  if (hasYards && hasDate) {
+    badge.textContent = 'Active';
+    badge.className = 'badge badge-active';
+  } else {
+    badge.textContent = 'Draft';
+    badge.className = 'badge badge-draft';
+  }
+}
+
+// ─── DATE UTILITIES ───
+function nextWorkday(date) {
+  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() + 1);
+  return d;
+}
+
+function addWorkDays(date, days) {
+  let d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  let count = 0;
+  while (count < days) {
+    d.setDate(d.getDate() + 1);
+    if (d.getDay() !== 0 && d.getDay() !== 6) count++;
+  }
+  return d;
+}
+
+function addCalendarDays(date, days) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
+}
+
+function fmtDate(d) {
+  if (!d) return '—';
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+}
+
+function fmtDateShort(d) {
+  if (!d) return '';
+  return `${d.getMonth()+1}/${d.getDate()}`;
+}
+
+function isoDate(d) {
+  if (!d) return '';
+  return d.toISOString().split('T')[0];
+}
+
+function dateDiffDays(a, b) {
+  return Math.round((b - a) / (1000*60*60*24));
+}
+
+// ─── BUILD CALENDAR SCHEDULE ───
+function buildCalendarSchedule() {
+  const calendarBody = document.getElementById('calendar-body');
+  calendarBody.innerHTML = '';
+  calendarData = [];
+
+  const scaffInput = document.getElementById('scaff-start-date').value;
+  const lathInput = document.getElementById('lath-start-date').value;
+
+  if (!scaffInput || !lathInput) {
+    document.getElementById('stat-days').textContent = '—';
+    buildGantt();
+    return;
+  }
+
+  const [scY, scM, scD] = scaffInput.split('-').map(Number);
+  const [laY, laM, laD] = lathInput.split('-').map(Number);
+  const globalScaffStart = nextWorkday(new Date(scY, scM - 1, scD));
+  const globalLathStart = nextWorkday(new Date(laY, laM - 1, laD));
+
+  const rateMap = {};
+  rates.forEach(r => { rateMap[r.id] = r; });
+
+  let scaffCursor = new Date(globalScaffStart.getTime());
+  let lathCursor = new Date(globalLathStart.getTime());
+
+  let globalMin = null, globalMax = null;
+
+  function trackDates(start, end) {
+    if (start && (!globalMin || start < globalMin)) globalMin = new Date(start);
+    if (end && (!globalMax || end > globalMax)) globalMax = new Date(end);
+  }
+
+  phases.forEach((phase) => {
+    const qty = parseFloat(phase.totalYards) || 0;
+    if (qty <= 0) return;
+
+    const rScaff = rateMap.scaffold;
+    const rLath = rateMap.lath;
+    const rScratch = rateMap.scratch;
+    const rBrown = rateMap.brown;
+    const rFinish = rateMap.finish;
+
+    const daysSc = rScaff.rate > 0 ? Math.ceil(qty / rScaff.rate) : 0;
+    const daysLath = rLath.rate > 0 ? Math.ceil(qty / rLath.rate) : 0;
+    const daysScratch = rScratch.rate > 0 ? Math.ceil(qty / rScratch.rate) : 0;
+    const daysBrown = rBrown.rate > 0 ? Math.ceil(qty / rBrown.rate) : 0;
+    const daysFinish = rFinish.rate > 0 ? Math.ceil(qty / rFinish.rate) : 0;
+
+    // Scaffolding
+    let scaffStart = null, scaffEnd = null;
+    if (daysSc > 0) {
+      const startCandidate = new Date(Math.max(scaffCursor.getTime(), globalScaffStart.getTime()));
+      scaffStart = nextWorkday(startCandidate);
+      scaffEnd = addWorkDays(scaffStart, daysSc - 1);
+      scaffCursor = addWorkDays(scaffStart, daysSc);
+      if (rScaff.included) {
+        addCalRow(phase.name, 'Scaffolding', scaffStart, scaffEnd, daysSc, 'scaffold');
+      }
+    }
+
+    // Lath
+    let lathStart = null, lathEnd = null;
+    if (daysLath > 0) {
+      const startCandidate = new Date(Math.max(lathCursor.getTime(), globalLathStart.getTime()));
+      lathStart = nextWorkday(startCandidate);
+      lathEnd = addWorkDays(lathStart, daysLath - 1);
+      lathCursor = addWorkDays(lathStart, daysLath);
+      if (rLath.included) {
+        addCalRow(phase.name, 'Lath', lathStart, lathEnd, daysLath, 'lath');
+      }
+    }
+
+    let prepEnd = lathEnd || lathStart || scaffEnd || globalLathStart;
+
+    // Scratch + Cure
+    let stageCursor = prepEnd;
+    let scratchEnd = null, cure1End = null;
+    if (rScratch.included && daysScratch > 0) {
+      const scratchStart = nextWorkday(addCalendarDays(stageCursor, 1));
+      scratchEnd = addWorkDays(scratchStart, daysScratch - 1);
+      addCalRow(phase.name, 'Scratch', scratchStart, scratchEnd, daysScratch, 'scratch');
+
+      const cure1Start = addCalendarDays(scratchStart, 1);
+      cure1End = addCalendarDays(cure1Start, 1);
+      addCalRow(phase.name, 'Cure (after Scratch)', cure1Start, cure1End, 2, 'cure');
+      stageCursor = cure1End;
+    }
+
+    // Brown + Cure
+    let brownEnd = null, cure2End = null;
+    if (rBrown.included && daysBrown > 0) {
+      const brownStart = nextWorkday(addCalendarDays(stageCursor, 1));
+      brownEnd = addWorkDays(brownStart, daysBrown - 1);
+      addCalRow(phase.name, 'Brown', brownStart, brownEnd, daysBrown, 'brown');
+
+      const cure2Start = addCalendarDays(brownStart, 1);
+      cure2End = addCalendarDays(cure2Start, 6);
+      addCalRow(phase.name, 'Cure (after Brown)', cure2Start, cure2End, 7, 'cure');
+      stageCursor = cure2End;
+    }
+
+    // Finish
+    if (rFinish.included && daysFinish > 0) {
+      let finishBase;
+      if (rBrown.included && daysBrown > 0 && cure2End) finishBase = cure2End;
+      else if (rScratch.included && daysScratch > 0 && cure1End) finishBase = cure1End;
+      else finishBase = prepEnd || stageCursor;
+
+      const finishStart = nextWorkday(addCalendarDays(finishBase, 1));
+      const finishEnd = addWorkDays(finishStart, daysFinish - 1);
+      addCalRow(phase.name, 'Finish', finishStart, finishEnd, daysFinish, 'finish');
+    }
+  });
+
+  function addCalRow(phaseName, taskName, start, end, workDays, taskType) {
+    calendarData.push({ phase: phaseName, task: taskName, start, end, workDays, taskType });
+    trackDates(start, end);
+
+    const tr = document.createElement('tr');
+    const isPhaseStart = calendarBody.children.length === 0 ||
+      (calendarBody.lastElementChild && !calendarBody.lastElementChild.dataset.phase) ||
+      calendarBody.lastElementChild?.dataset.phase !== phaseName;
+    
+    if (isPhaseStart) {
+      const groupRow = document.createElement('tr');
+      groupRow.className = 'phase-group';
+      groupRow.dataset.phase = phaseName;
+      groupRow.innerHTML = `<td colspan="5">${escapeHtml(phaseName)}</td>`;
+      calendarBody.appendChild(groupRow);
+    }
+
+    tr.dataset.phase = phaseName;
+    tr.innerHTML = `
+      <td></td>
+      <td><span class="task-badge"><span class="task-dot task-dot-${taskType}"></span>${taskName}</span></td>
+      <td class="mono">${fmtDate(start)}</td>
+      <td class="mono">${fmtDate(end)}</td>
+      <td class="text-right mono">${workDays}</td>
+    `;
+    calendarBody.appendChild(tr);
+  }
+
+  // Update also the table view with start/end dates
+  updateTableDates();
+
+  // Calendar days
+  if (globalMin && globalMax) {
+    const totalCalDays = dateDiffDays(globalMin, globalMax) + 1;
+    document.getElementById('stat-days').textContent = totalCalDays;
+  }
+
+  buildGantt();
+}
+
+// ─── UPDATE TABLE VIEW WITH DATES ───
+function updateTableDates() {
+  const rows = document.getElementById('output-body').querySelectorAll('tr:not(.phase-group)');
+  let calIdx = 0;
+  rows.forEach(tr => {
+    const cells = tr.querySelectorAll('td');
+    if (cells.length >= 7 && calIdx < calendarData.length) {
+      const cd = calendarData[calIdx];
+      // Match task name
+      const taskText = cells[1]?.textContent?.trim();
+      if (taskText && cd.task === taskText) {
+        cells[5].innerHTML = `<span class="mono">${fmtDate(cd.start)}</span>`;
+        cells[6].innerHTML = `<span class="mono">${fmtDate(cd.end)}</span>`;
+        calIdx++;
+      }
+    }
+  });
+}
+
+// ─── GANTT CHART ───
+function buildGantt() {
+  const container = document.getElementById('gantt-container');
+  
+  if (calendarData.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">📊</div>
+        <div class="empty-state-text">Set start dates and phase yards to view Gantt chart</div>
+        <div class="empty-state-sub">Enter scaffolding & lath start dates in Schedule Settings</div>
+      </div>`;
+    return;
+  }
+
+  let minDate = null, maxDate = null;
+  calendarData.forEach(d => {
+    if (d.start && (!minDate || d.start < minDate)) minDate = new Date(d.start);
+    if (d.end && (!maxDate || d.end > maxDate)) maxDate = new Date(d.end);
+  });
+
+  if (!minDate || !maxDate) return;
+
+  // Add 2-day padding
+  minDate = addCalendarDays(minDate, -2);
+  maxDate = addCalendarDays(maxDate, 3);
+  const totalDays = dateDiffDays(minDate, maxDate) + 1;
+  const dayWidth = Math.max(18, Math.min(36, 900 / totalDays));
+  const trackWidth = totalDays * dayWidth;
+
+  let html = '';
+
+  // Date header
+  html += `<div class="gantt-header-row" style="min-width: ${180 + trackWidth}px;">`;
+  for (let i = 0; i < totalDays; i++) {
+    const d = addCalendarDays(minDate, i);
+    const isFirstOfMonth = d.getDate() === 1;
+    const isMonday = d.getDay() === 1;
+    const showLabel = isFirstOfMonth || (isMonday && dayWidth >= 24);
+    html += `<div class="gantt-date-label" style="width:${dayWidth}px; min-width:${dayWidth}px;">
+      ${showLabel ? fmtDateShort(d) : ''}
+    </div>`;
+  }
+  html += '</div>';
+
+  // Rows grouped by phase
+  let currentPhase = '';
+  calendarData.forEach((item, idx) => {
+    if (item.phase !== currentPhase) {
+      currentPhase = item.phase;
+      html += `<div class="gantt-phase-header" style="min-width: ${180 + trackWidth}px;">${escapeHtml(item.phase)}</div>`;
+    }
+
+    const startOff = dateDiffDays(minDate, item.start);
+    const endOff = dateDiffDays(minDate, item.end);
+    const barLeft = startOff * dayWidth;
+    const barWidth = Math.max(dayWidth * 0.5, (endOff - startOff + 1) * dayWidth - 2);
+
+    html += `<div class="gantt-row" style="min-width: ${180 + trackWidth}px;">
+      <div class="gantt-label">${item.task}</div>
+      <div class="gantt-track" style="width:${trackWidth}px; min-width:${trackWidth}px;">
+        <div class="gantt-bar gantt-bar-${item.taskType}" 
+          style="left:${barLeft}px; width:${barWidth}px;"
+          onmouseenter="showTooltip(event, '${escapeHtml(item.task)}: ${fmtDate(item.start)} → ${fmtDate(item.end)} (${item.workDays}d)')"
+          onmouseleave="hideTooltip()"
+          >${item.workDays}d</div>
+      </div>
+    </div>`;
+  });
+
+  container.innerHTML = html;
+}
+
+// ─── TOOLTIP ───
+function showTooltip(e, text) {
+  const tip = document.getElementById('tooltip');
+  tip.textContent = text;
+  tip.style.display = 'block';
+  tip.style.left = e.pageX + 12 + 'px';
+  tip.style.top = e.pageY - 10 + 'px';
+}
+function hideTooltip() {
+  document.getElementById('tooltip').style.display = 'none';
+}
+
+// ─── VIEW TABS ───
+function switchView(view, btn) {
+  document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.getElementById('view-' + view).classList.add('active');
+}
+
+// ─── EXPORT CSV ───
+function exportCalendarSchedule() {
+  if (calendarData.length === 0) return;
+
+  const scheduleMap = {};
+  const phaseOrder = [];
+  const taskOrder = [];
+
+  calendarData.forEach(d => {
+    if (!scheduleMap[d.phase]) { scheduleMap[d.phase] = {}; phaseOrder.push(d.phase); }
+    if (!taskOrder.includes(d.task)) taskOrder.push(d.task);
+    scheduleMap[d.phase][d.task] = { start: isoDate(d.start), end: isoDate(d.end) };
+  });
+
+  const defaultTaskOrder = ['Scaffolding','Lath','Scratch','Cure (after Scratch)','Brown','Cure (after Brown)','Finish'];
+  const finalTaskOrder = defaultTaskOrder.concat(taskOrder.filter(t => !defaultTaskOrder.includes(t)));
+
+  const header = ['Phase'];
+  finalTaskOrder.forEach(task => { header.push(`${task} Start`); header.push(`${task} End`); });
+  const data = [header];
+
+  phases.forEach(p => {
+    if (!scheduleMap[p.name]) return;
+    const row = [p.name];
+    finalTaskOrder.forEach(task => {
+      const entry = scheduleMap[p.name]?.[task];
+      row.push(entry ? entry.start : '');
+      row.push(entry ? entry.end : '');
+    });
+    data.push(row);
+  });
+
+  const csvContent = data.map(row => row.map(item => '"' + String(item).replace(/"/g, '""') + '"').join(',')).join('\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'schedule.csv';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+// ─── UTILITIES ───
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+</script>
+</body>
+</html>
