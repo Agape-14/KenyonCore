@@ -378,6 +378,14 @@ body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--gray-50);co
       </div>
       <div class="card-body">
         <div id="sov-split-rates"></div>
+        <div style="border-top:1px solid var(--gray-100);margin-top:8px;padding-top:8px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <span style="font-size:11px;font-weight:600;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.4px;">Misc Items</span>
+            <button class="btn btn-primary btn-sm" onclick="addCustomSplit()">+ Add</button>
+          </div>
+          <div style="font-size:11px;color:var(--gray-400);margin-bottom:6px;">Check box to include in breakdown</div>
+          <div id="sov-custom-splits"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -411,13 +419,9 @@ body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--gray-50);co
     </div>
     <div class="card animate-in" style="animation-delay:160ms;">
       <div class="card-header"><span class="card-title">SOV Breakdown</span></div>
-      <div style="overflow-x:auto;">
+      <div style="overflow-x:auto;" id="sov-breakdown-wrap">
         <table class="schedule-table" id="sov-breakdown-table">
-          <thead><tr>
-            <th>Item</th><th style="text-align:right;">Scaffolding</th><th style="text-align:right;">Lath</th>
-            <th style="text-align:right;">Scratch</th><th style="text-align:right;">Brown</th>
-            <th style="text-align:right;">Finish</th><th style="text-align:right;">Total</th>
-          </tr></thead>
+          <thead id="sov-breakdown-head"></thead>
           <tbody id="sov-breakdown-body"></tbody>
         </table>
       </div>
@@ -567,7 +571,7 @@ function saveToStorage(){
         lathStart:document.getElementById('lath-start-date')?.value||'',
         sovContract:document.getElementById('sov-contract')?.value||'',
         sovContractRaw:document.getElementById('sov-contract')?.dataset?.raw||'',
-        sovMiscItems,sovElevations,sovSplits
+        sovMiscItems,sovElevations,sovSplits,sovCustomSplits,sovCustomCounter
       };
       localStorage.setItem(STORAGE_KEY,JSON.stringify(data));
       showSaveIndicator();
@@ -589,6 +593,8 @@ function loadFromStorage(){
     if(data.sovMiscItems)sovMiscItems=data.sovMiscItems;
     if(data.sovElevations)sovElevations=data.sovElevations;
     if(data.sovSplits)sovSplits=data.sovSplits;
+    if(data.sovCustomSplits)sovCustomSplits=data.sovCustomSplits;
+    if(data.sovCustomCounter)sovCustomCounter=data.sovCustomCounter;
   }catch(e){console.warn('Load failed:',e);}
 }
 
@@ -620,7 +626,7 @@ function getSnapshot(){
     lathStart:document.getElementById('lath-start-date')?.value||'',
     sovContract:document.getElementById('sov-contract')?.value||'',
     sovContractRaw:document.getElementById('sov-contract')?.dataset?.raw||'',
-    sovMiscItems,sovElevations,sovSplits
+    sovMiscItems,sovElevations,sovSplits,sovCustomSplits,sovCustomCounter
   });
 }
 
@@ -648,6 +654,8 @@ function restoreSnapshot(snap){
   sovMiscItems=data.sovMiscItems||[];
   sovElevations=data.sovElevations||[{name:'Elevation 1',lf:0}];
   sovSplits=data.sovSplits||sovSplits;
+  sovCustomSplits=data.sovCustomSplits||[];
+  sovCustomCounter=data.sovCustomCounter||0;
   renderRates();renderPhases();calculateSchedule();
   renderSovSplits();renderSovMisc();renderSovElevations();calcSOV();
   saveToStorage();
@@ -1009,41 +1017,42 @@ function buildSovExcelSheet(wb,jobName){
   const miscTotal=sovMiscItems.reduce((s,m)=>s+m.value,0);
   const distributable=contract-miscTotal;
   const totalLF=sovElevations.reduce((s,e)=>s+(parseFloat(e.lf)||0),0);
-  const hdr=['Item','Scaffolding','Lath','Scratch','Brown','Finish','Total'];
+  const activeSplits=getActiveSplits();
 
-  // Global rounding — same as calcSOV
-  const allCells=[];const rowNames=[];
+  const elevs=[];
   sovElevations.forEach(e=>{
     const lf=parseFloat(e.lf)||0;const pct=totalLF>0?(lf/totalLF):0;const ev=distributable*pct;
-    if(ev<=0)return;
-    const start=allCells.length;
-    sovSplits.forEach(sp=>{allCells.push(ev*(sp.pct/100));});
-    rowNames.push({name:e.name,start,count:sovSplits.length});
+    if(ev>0)elevs.push({name:e.name,value:ev});
   });
+
+  const hdr=['Task',...elevs.map(e=>e.name),'Total'];
+
+  // Global rounding
+  const allCells=[];
+  activeSplits.forEach(sp=>{elevs.forEach(el=>{allCells.push(el.value*(sp.pct/100));});});
   const target=Math.round(distributable);
   const fl=allCells.map(v=>Math.floor(v));
-  const rm=allCells.map((v,i)=>({i,rem:v-fl[i]})).sort((a,b)=>b.rem-a.rem);
+  const rems=allCells.map((v,i)=>({i,rem:v-fl[i]})).sort((a,b)=>b.rem-a.rem);
   let diff=target-fl.reduce((s,v)=>s+v,0);
-  for(let j=0;j<diff&&j<rm.length;j++){fl[rm[j].i]+=1;}
+  for(let j=0;j<diff&&j<rems.length;j++){fl[rems[j].i]+=1;}
 
-  const rows=[];
-  rowNames.forEach(rn=>{
-    const r=[rn.name];let rt=0;
-    for(let k=rn.start;k<rn.start+rn.count;k++){r.push(fl[k]);rt+=fl[k];}
-    r.push(rt);rows.push(r);
+  const rows=[];let ci=0;
+  const elevTotals=elevs.map(()=>0);let grandTotal=0;
+  activeSplits.forEach(sp=>{
+    const r=[sp.label];let rt=0;
+    elevs.forEach((el,ei)=>{const v=fl[ci];r.push(v);elevTotals[ei]+=v;rt+=v;ci++;});
+    r.push(rt);grandTotal+=rt;rows.push(r);
   });
-  sovMiscItems.forEach(m=>{if(m.value<=0&&!m.name)return;rows.push([m.name||'Misc Item','','','','','',Math.round(m.value)]);});
-  const totRow=['TOTAL'];
-  for(let c=1;c<=6;c++){let sum=0;rows.forEach(r=>{if(typeof r[c]==='number')sum+=r[c];});totRow.push(sum);}
-  rows.push(totRow);
+  sovMiscItems.forEach(m=>{if(m.value<=0&&!m.name)return;const mv=Math.round(m.value);const r=[m.name||'Misc Item'];elevs.forEach(()=>r.push(''));r.push(mv);grandTotal+=mv;rows.push(r);});
+  const totRow=['TOTAL'];elevTotals.forEach(v=>totRow.push(v));totRow.push(grandTotal);rows.push(totRow);
 
   const titleRow=[jobName+' — Schedule of Values'];for(let i=1;i<hdr.length;i++)titleRow.push('');
   const contractRow=['Contract: '+fmtWhole(contract)+'  |  Misc: '+fmtWhole(miscTotal)+'  |  Distributable: '+fmtWhole(distributable)];for(let i=1;i<hdr.length;i++)contractRow.push('');
   const wsData=[titleRow,contractRow,[],hdr,...rows];
   const ws=XLSX.utils.aoa_to_sheet(wsData);
-  ws['!cols']=[{wch:24},{wch:16},{wch:16},{wch:16},{wch:16},{wch:16},{wch:18}];
+  ws['!cols']=[{wch:20},...elevs.map(()=>({wch:16})),{wch:18}];
   if(hdr.length>1)ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:hdr.length-1}},{s:{r:1,c:0},e:{r:1,c:hdr.length-1}}];
-  for(let r=4;r<wsData.length;r++){for(let c=1;c<7;c++){const ref=XLSX.utils.encode_cell({r,c});if(ws[ref]&&typeof ws[ref].v==='number')ws[ref].z='$#,##0';}}
+  for(let r=4;r<wsData.length;r++){for(let c=1;c<hdr.length;c++){const ref=XLSX.utils.encode_cell({r,c});if(ws[ref]&&typeof ws[ref].v==='number')ws[ref].z='$#,##0';}}
   XLSX.utils.book_append_sheet(wb,ws,'Schedule of Values');
 }
 
@@ -1096,41 +1105,35 @@ async function exportPDF(){
     const miscTotal=sovMiscItems.reduce((s,m)=>s+m.value,0);
     const distributable=contract-miscTotal;
     const totalLF=sovElevations.reduce((s,e)=>s+(parseFloat(e.lf)||0),0);
+    const activeSplits=getActiveSplits();
 
     doc.setFont('helvetica','bold');doc.setFontSize(13);doc.setTextColor(...nv);
     doc.text('Schedule of Values',10,y);y+=2;
     doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...gr);
     doc.text(`Contract: ${fmtWhole(contract)}    Misc Items: ${fmtWhole(miscTotal)}    Distributable: ${fmtWhole(distributable)}`,10,y+4);y+=10;
 
-    const hdr=['Item','Scaffolding','Lath','Scratch','Brown','Finish','Total'];
-    // Global rounding
-    const allCells=[];const rowNames=[];
-    sovElevations.forEach(e=>{
-      const lf=parseFloat(e.lf)||0;const pct=totalLF>0?(lf/totalLF):0;const ev=distributable*pct;
-      if(ev<=0)return;
-      const start=allCells.length;
-      sovSplits.forEach(sp=>{allCells.push(ev*(sp.pct/100));});
-      rowNames.push({name:e.name,start,count:sovSplits.length});
-    });
+    const elevs=[];
+    sovElevations.forEach(e=>{const lf=parseFloat(e.lf)||0;const pct=totalLF>0?(lf/totalLF):0;const ev=distributable*pct;if(ev>0)elevs.push({name:e.name,value:ev});});
+
+    const hdr=['Task',...elevs.map(e=>e.name),'Total'];
+    const allCells=[];
+    activeSplits.forEach(sp=>{elevs.forEach(el=>{allCells.push(el.value*(sp.pct/100));});});
     const target=Math.round(distributable);
     const fl=allCells.map(v=>Math.floor(v));
     const rems=allCells.map((v,i)=>({i,rem:v-fl[i]})).sort((a,b)=>b.rem-a.rem);
     let diff=target-fl.reduce((s,v)=>s+v,0);
     for(let j=0;j<diff&&j<rems.length;j++){fl[rems[j].i]+=1;}
 
-    const rows=[];let colSums={};sovSplits.forEach(sp=>{colSums[sp.id]=0;});let grandTotal=0;
-    rowNames.forEach(rn=>{
-      const r=[rn.name];let rt=0;
-      for(let k=rn.start;k<rn.start+rn.count;k++){
-        const v=fl[k];r.push(fmtWhole(v));
-        colSums[sovSplits[k-rn.start].id]+=v;rt+=v;
-      }
+    const rows=[];let ci=0;const elevTotals=elevs.map(()=>0);let grandTotal=0;
+    activeSplits.forEach(sp=>{
+      const r=[sp.label];let rt=0;
+      elevs.forEach((el,ei)=>{const v=fl[ci];r.push(fmtWhole(v));elevTotals[ei]+=v;rt+=v;ci++;});
       r.push(fmtWhole(rt));grandTotal+=rt;rows.push(r);
     });
-    sovMiscItems.forEach(m=>{if(m.value<=0&&!m.name)return;const mv=Math.round(m.value);rows.push([m.name||'Misc Item','—','—','—','—','—',fmtWhole(mv)]);grandTotal+=mv;});
-    const totRow=['TOTAL'];sovSplits.forEach(sp=>{totRow.push(fmtWhole(colSums[sp.id]));});totRow.push(fmtWhole(grandTotal));rows.push(totRow);
+    sovMiscItems.forEach(m=>{if(m.value<=0&&!m.name)return;const mv=Math.round(m.value);const r=[m.name||'Misc Item'];elevs.forEach(()=>r.push('—'));r.push(fmtWhole(mv));grandTotal+=mv;rows.push(r);});
+    const totRow=['TOTAL'];elevTotals.forEach(v=>totRow.push(fmtWhole(v)));totRow.push(fmtWhole(grandTotal));rows.push(totRow);
 
-    const cs={1:{halign:'right'},2:{halign:'right'},3:{halign:'right'},4:{halign:'right'},5:{halign:'right'},6:{halign:'right'}};
+    const cs={};for(let i=1;i<hdr.length;i++)cs[i]={halign:'right'};
     doc.autoTable({startY:y,head:[hdr],body:rows,theme:'grid',styles:{font:'helvetica',fontSize:8,cellPadding:3},headStyles:{fillColor:or,textColor:[255,255,255],fontStyle:'bold',fontSize:8},alternateRowStyles:{fillColor:[245,246,250]},columnStyles:cs,margin:{left:10,right:10}});
     y=doc.lastAutoTable.finalY+10;
   }
@@ -1184,12 +1187,14 @@ function switchPage(page){
 let sovMiscItems=[]; // {name:'OCIP', value:0}
 let sovElevations=[{name:'Elevation 1',lf:0}];
 let sovSplits=[
-  {id:'scaffold',label:'Scaffolding',pct:25,color:'scaffold'},
-  {id:'lath',label:'Lath',pct:30,color:'lath'},
-  {id:'scratch',label:'Scratch',pct:15,color:'scratch'},
-  {id:'brown',label:'Brown',pct:15,color:'brown'},
-  {id:'finish',label:'Finish',pct:15,color:'finish'},
+  {id:'scaffold',label:'Scaffolding',pct:25,color:'scaffold',core:true,included:true},
+  {id:'lath',label:'Lath',pct:30,color:'lath',core:true,included:true},
+  {id:'scratch',label:'Scratch',pct:15,color:'scratch',core:true,included:true},
+  {id:'brown',label:'Brown',pct:15,color:'brown',core:true,included:true},
+  {id:'finish',label:'Finish',pct:15,color:'finish',core:true,included:true},
 ];
+let sovCustomSplits=[]; // {id:'custom_0',label:'Cleanup',pct:0,included:false}
+let sovCustomCounter=0;
 let sovData=[]; // for export
 
 function parseCurrency(s){return parseFloat(String(s).replace(/[^0-9.\-]/g,''))||0;}
@@ -1220,16 +1225,46 @@ function renderSovSplits(){
   const c=document.getElementById('sov-split-rates');if(!c)return;c.innerHTML='';
   sovSplits.forEach((s,i)=>{
     const row=document.createElement('div');row.className='rate-row';
-    row.innerHTML=`<span class="task-dot task-dot-${s.color}"></span>
+    row.innerHTML=`<input type="checkbox" class="rate-check" ${s.included?'checked':''} onchange="sovSplits[${i}].included=this.checked;updateSplitTotal();calcSOV();stateChanged();" />
+      <span class="task-dot task-dot-${s.color}"></span>
       <span class="rate-label">${s.label}</span>
       <input type="number" class="rate-input" value="${s.pct}" min="0" max="100" step="0.1" style="width:70px;" oninput="sovSplits[${i}].pct=parseFloat(this.value)||0;updateSplitTotal();calcSOV();stateChanged();" />
       <span class="rate-unit">%</span>`;
     c.appendChild(row);
   });
+  renderCustomSplits();
   updateSplitTotal();
 }
+
+function addCustomSplit(){
+  sovCustomSplits.push({id:'custom_'+(sovCustomCounter++),label:'',pct:0,included:false});
+  renderCustomSplits();stateChanged();
+}
+function removeCustomSplit(i){sovCustomSplits.splice(i,1);renderCustomSplits();calcSOV();stateChanged();}
+
+function renderCustomSplits(){
+  const c=document.getElementById('sov-custom-splits');if(!c)return;c.innerHTML='';
+  sovCustomSplits.forEach((s,i)=>{
+    const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:6px;margin-bottom:6px;';
+    row.innerHTML=`<input type="checkbox" class="rate-check" ${s.included?'checked':''} onchange="sovCustomSplits[${i}].included=this.checked;updateSplitTotal();calcSOV();stateChanged();" />
+      <input type="text" value="${esc(s.label)}" placeholder="Item name" style="flex:1;padding:5px 8px;border:1px solid var(--gray-200);border-radius:var(--radius-sm);font-family:inherit;font-size:12px;" oninput="sovCustomSplits[${i}].label=this.value;calcSOV();stateChanged();" />
+      <input type="number" class="rate-input" value="${s.pct}" min="0" max="100" step="0.1" style="width:60px;font-size:12px;padding:5px 6px;" oninput="sovCustomSplits[${i}].pct=parseFloat(this.value)||0;updateSplitTotal();calcSOV();stateChanged();" />
+      <span class="rate-unit">%</span>
+      <button class="misc-remove" onclick="removeCustomSplit(${i})">✕</button>`;
+    c.appendChild(row);
+  });
+}
+
+function getActiveSplits(){
+  const active=[];
+  sovSplits.forEach(s=>{if(s.included&&s.pct>0)active.push(s);});
+  sovCustomSplits.forEach(s=>{if(s.included&&s.pct>0)active.push(s);});
+  return active;
+}
+
 function updateSplitTotal(){
-  const total=sovSplits.reduce((s,r)=>s+r.pct,0);
+  const included=[...sovSplits.filter(s=>s.included),...sovCustomSplits.filter(s=>s.included)];
+  const total=included.reduce((s,r)=>s+r.pct,0);
   const label=document.getElementById('sov-split-total-label');
   if(label){
     label.textContent='Total: '+total.toFixed(1)+'%';
@@ -1297,88 +1332,105 @@ function calcSOV(){
 
   updateSovElevationCalcs();
 
-  const body=document.getElementById('sov-breakdown-body');if(!body)return;body.innerHTML='';
+  const head=document.getElementById('sov-breakdown-head');
+  const body=document.getElementById('sov-breakdown-body');
+  if(!head||!body)return;head.innerHTML='';body.innerHTML='';
   sovData=[];
 
-  // Step 1: Collect ALL raw cell values across all elevations
-  const allCells=[]; // {rowIdx, splitIdx, id, raw}
-  const rowMeta=[]; // {name, startIdx, count}
-  let idx=0;
+  const activeSplits=getActiveSplits();
+  // Get elevations with value
+  const elevs=[];
   sovElevations.forEach(e=>{
     const lf=parseFloat(e.lf)||0;
     const pct=totalLF>0?(lf/totalLF):0;
-    const elevVal=distributable*pct;
-    if(elevVal<=0)return;
-    const start=idx;
-    sovSplits.forEach((sp,si)=>{
-      allCells.push({rowIdx:rowMeta.length,splitIdx:si,id:sp.id,raw:elevVal*(sp.pct/100)});
-      idx++;
-    });
-    rowMeta.push({name:e.name,startIdx:start,count:sovSplits.length});
+    const ev=distributable*pct;
+    if(ev>0)elevs.push({name:e.name,pct,value:ev});
   });
 
-  // Step 2: Global largest-remainder rounding so all cells sum to exactly distributable
+  if(elevs.length===0||activeSplits.length===0){return;}
+
+  // Step 1: Collect ALL raw cell values [split x elevation]
+  const allCells=[];
+  activeSplits.forEach(sp=>{
+    elevs.forEach(el=>{
+      allCells.push({splitId:sp.id||sp.label,elevName:el.name,raw:el.value*(sp.pct/100)});
+    });
+  });
+
+  // Step 2: Global largest-remainder rounding
   const target=Math.round(distributable);
   const floored=allCells.map(c=>Math.floor(c.raw));
-  const remainders=allCells.map((c,i)=>({i,rem:c.raw-floored[i]}));
-  let flooredSum=floored.reduce((s,v)=>s+v,0);
-  let diff=target-flooredSum;
-  remainders.sort((a,b)=>b.rem-a.rem);
-  for(let j=0;j<diff&&j<remainders.length;j++){floored[remainders[j].i]+=1;}
+  const rems=allCells.map((c,i)=>({i,rem:c.raw-floored[i]})).sort((a,b)=>b.rem-a.rem);
+  let diff=target-floored.reduce((s,v)=>s+v,0);
+  for(let j=0;j<diff&&j<rems.length;j++){floored[rems[j].i]+=1;}
 
-  // Step 3: Build rows from rounded values
-  let colTotals={scaffold:0,lath:0,scratch:0,brown:0,finish:0,total:0};
-
-  rowMeta.forEach((rm,ri)=>{
-    const row={name:rm.name,type:'elevation'};
-    let rowTotal=0;
-    for(let k=rm.startIdx;k<rm.startIdx+rm.count;k++){
-      const cell=allCells[k];
-      const val=floored[k];
-      row[cell.id]=val;
-      colTotals[cell.id]+=val;
-      rowTotal+=val;
-    }
-    row.total=rowTotal;
-    colTotals.total+=rowTotal;
-    sovData.push(row);
-
-    const tr=document.createElement('tr');
-    tr.innerHTML=`<td style="font-weight:500;">${esc(rm.name)}</td>
-      ${sovSplits.map(sp=>`<td class="text-right mono">${fmtWhole(row[sp.id])}</td>`).join('')}
-      <td class="text-right mono" style="font-weight:600;">${fmtWhole(rowTotal)}</td>`;
-    body.appendChild(tr);
+  // Build lookup: [splitIdx][elevIdx] = rounded value
+  const grid=[];
+  let ci=0;
+  activeSplits.forEach((sp,si)=>{
+    grid[si]=[];
+    elevs.forEach((el,ei)=>{
+      grid[si][ei]=floored[ci];ci++;
+    });
   });
 
-  // Misc items
+  // Build header: Task | Elev1 | Elev2 | ... | Total
+  const htr=document.createElement('tr');
+  htr.innerHTML=`<th>Task</th>${elevs.map(el=>`<th style="text-align:right;">${esc(el.name)}</th>`).join('')}<th style="text-align:right;">Total</th>`;
+  head.appendChild(htr);
+
+  // Build rows: one per active split
+  const elevTotals=elevs.map(()=>0);
+  let grandTotal=0;
+
+  activeSplits.forEach((sp,si)=>{
+    let rowTotal=0;
+    const cells=elevs.map((el,ei)=>{
+      const v=grid[si][ei];
+      elevTotals[ei]+=v;
+      rowTotal+=v;
+      return v;
+    });
+    grandTotal+=rowTotal;
+
+    const dotClass=sp.color?`task-dot-${sp.color}`:'';
+    const dot=sp.color?`<span class="task-dot ${dotClass}"></span>`:`<span class="task-dot" style="background:var(--gray-400);"></span>`;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td><span class="task-badge">${dot}${esc(sp.label)}</span></td>
+      ${cells.map(v=>`<td class="text-right mono">${fmtWhole(v)}</td>`).join('')}
+      <td class="text-right mono" style="font-weight:600;">${fmtWhole(rowTotal)}</td>`;
+    body.appendChild(tr);
+
+    sovData.push({task:sp.label,values:cells,total:rowTotal});
+  });
+
+  // Misc items row(s) — standalone, not per-elevation
   sovMiscItems.forEach(m=>{
     if(m.value<=0&&!m.name)return;
     const mv=Math.round(m.value);
-    const row={name:m.name||'Misc Item',type:'misc',scaffold:0,lath:0,scratch:0,brown:0,finish:0,total:mv};
-    sovData.push(row);
-    colTotals.total+=mv;
-
+    grandTotal+=mv;
     const tr=document.createElement('tr');
     tr.style.cssText='background:var(--gray-50);font-style:italic;color:var(--gray-600);';
     tr.innerHTML=`<td>${esc(m.name||'Misc Item')}</td>
-      <td class="text-right mono">—</td><td class="text-right mono">—</td><td class="text-right mono">—</td><td class="text-right mono">—</td><td class="text-right mono">—</td>
+      ${elevs.map(()=>`<td class="text-right mono">—</td>`).join('')}
       <td class="text-right mono" style="font-weight:600;">${fmtWhole(mv)}</td>`;
     body.appendChild(tr);
+    sovData.push({task:m.name||'Misc Item',values:elevs.map(()=>0),total:mv,isMisc:true});
   });
 
   // Totals row
   const totTr=document.createElement('tr');totTr.className='phase-total';
-  totTr.innerHTML=`<td style="font-weight:700;">Subtotals</td>
-    ${sovSplits.map(sp=>`<td class="text-right mono" style="font-weight:700;">${fmtWhole(colTotals[sp.id])}</td>`).join('')}
-    <td class="text-right mono" style="font-weight:700;">${fmtWhole(colTotals.total)}</td>`;
+  totTr.innerHTML=`<td style="font-weight:700;">Total</td>
+    ${elevTotals.map(v=>`<td class="text-right mono" style="font-weight:700;">${fmtWhole(v)}</td>`).join('')}
+    <td class="text-right mono" style="font-weight:700;">${fmtWhole(grandTotal)}</td>`;
   body.appendChild(totTr);
 
-  document.getElementById('sov-grand-total').textContent=fmtWhole(colTotals.total);
+  document.getElementById('sov-grand-total').textContent=fmtWhole(grandTotal);
 
   // Balance check
   const bc=document.getElementById('sov-balance-check');
   if(contract>0){
-    const d=colTotals.total-Math.round(contract);
+    const d=grandTotal-Math.round(contract);
     if(d===0){bc.innerHTML='<span style="color:var(--green-600);">✓ Balanced — matches contract amount</span>';}
     else{bc.innerHTML=`<span style="color:var(--red-600);">⚠ Off by ${fmtWhole(Math.abs(d))} from contract amount</span>`;}
   }else{bc.innerHTML='';}
@@ -1386,7 +1438,8 @@ function calcSOV(){
 
 function resetSOV(){
   sovMiscItems=[];sovElevations=[{name:'Elevation 1',lf:0}];
-  sovSplits=[{id:'scaffold',label:'Scaffolding',pct:25,color:'scaffold'},{id:'lath',label:'Lath',pct:30,color:'lath'},{id:'scratch',label:'Scratch',pct:15,color:'scratch'},{id:'brown',label:'Brown',pct:15,color:'brown'},{id:'finish',label:'Finish',pct:15,color:'finish'}];
+  sovSplits=[{id:'scaffold',label:'Scaffolding',pct:25,color:'scaffold',core:true,included:true},{id:'lath',label:'Lath',pct:30,color:'lath',core:true,included:true},{id:'scratch',label:'Scratch',pct:15,color:'scratch',core:true,included:true},{id:'brown',label:'Brown',pct:15,color:'brown',core:true,included:true},{id:'finish',label:'Finish',pct:15,color:'finish',core:true,included:true}];
+  sovCustomSplits=[];sovCustomCounter=0;
   const ci=document.getElementById('sov-contract');if(ci){ci.value='';ci.dataset.raw='';}
   renderSovSplits();renderSovMisc();renderSovElevations();calcSOV();stateChanged();
 }
