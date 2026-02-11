@@ -479,7 +479,7 @@ body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--gray-50);co
           </div>
         </div>
       </div>
-      <div class="export-section">
+      <div class="export-section" id="column-toggles-section">
         <div class="export-section-title">Columns to Include</div>
         <div class="column-toggle-list" id="column-toggles"></div>
       </div>
@@ -927,22 +927,30 @@ function switchView(v,b){document.querySelectorAll('.view-tab').forEach(t=>t.cla
 // ═══════════════════════════════════════
 // EXPORT MODAL
 // ═══════════════════════════════════════
-function openExportModal(){document.getElementById('export-modal').classList.add('open');exportFormat='xlsx';exportSection='duration';renderExportModal();}
+function openExportModal(){
+  document.getElementById('export-modal').classList.add('open');
+  exportFormat='xlsx';
+  exportSection=currentPage==='sov'?'sov':'duration';
+  renderExportModal();
+  // Pre-select the right section button
+  const opts=document.querySelectorAll('#export-modal .export-section:nth-child(2) .export-option');
+  opts.forEach(o=>o.classList.remove('selected'));
+  opts.forEach(o=>{if((currentPage==='sov'&&o.textContent.includes('SOV'))||(currentPage!=='sov'&&o.textContent.includes('Duration')))o.classList.add('selected');});
+}
 function closeExportModal(){document.getElementById('export-modal').classList.remove('open');}
 function selectFormat(f,el){exportFormat=f;el.parentElement.querySelectorAll('.export-option').forEach(o=>o.classList.remove('selected'));el.classList.add('selected');renderExportModal();}
 function selectSection(s,el){exportSection=s;el.parentElement.querySelectorAll('.export-option').forEach(o=>o.classList.remove('selected'));el.classList.add('selected');renderExportModal();}
 
 function renderExportModal(){
   document.getElementById('export-execute-btn').textContent=exportFormat==='xlsx'?'⬇ Export Excel':'⬇ Export PDF';
-  document.getElementById('gantt-option-section').style.display=exportFormat==='pdf'?'block':'none';
+  const isSov=exportSection==='sov';
+  document.getElementById('gantt-option-section').style.display=(exportFormat==='pdf'&&!isSov)?'block':'none';
+  document.getElementById('column-toggles-section').style.display=isSov?'none':'block';
   const ct=document.getElementById('column-toggles');ct.innerHTML='';
+  if(isSov)return;
   let groups=[];
   if(exportSection==='duration'||exportSection==='both')groups.push({header:'Duration Table',cols:DURATION_COLUMNS,prefix:'dur_'});
   if(exportSection==='calendar'||exportSection==='both')groups.push({header:'Calendar Schedule',cols:CALENDAR_COLUMNS,prefix:'cal_'});
-  if(exportSection==='sov'){
-    ct.innerHTML='<div style="font-size:12px;color:var(--gray-500);padding:8px 0;">SOV exports all columns (Item, Scaffolding, Lath, Scratch, Brown, Finish, Total)</div>';
-    return;
-  }
   groups.forEach(g=>{
     if(exportSection==='both'){const gl=document.createElement('div');gl.style.cssText='font-size:11px;font-weight:700;color:var(--gray-500);margin:10px 0 6px;text-transform:uppercase;letter-spacing:0.4px';gl.textContent=g.header;ct.appendChild(gl);}
     g.cols.forEach(col=>{
@@ -1002,18 +1010,26 @@ function buildSovExcelSheet(wb,jobName){
   const distributable=contract-miscTotal;
   const totalLF=sovElevations.reduce((s,e)=>s+(parseFloat(e.lf)||0),0);
   const hdr=['Item','Scaffolding','Lath','Scratch','Brown','Finish','Total'];
-  const rows=[];
+
+  // Global rounding — same as calcSOV
+  const allCells=[];const rowNames=[];
   sovElevations.forEach(e=>{
     const lf=parseFloat(e.lf)||0;const pct=totalLF>0?(lf/totalLF):0;const ev=distributable*pct;
     if(ev<=0)return;
-    const cells=sovSplits.map(sp=>({raw:ev*(sp.pct/100)}));
-    const rounded=cells.map(c=>({val:Math.floor(c.raw),rem:c.raw-Math.floor(c.raw)}));
-    const target=Math.round(ev);
-    let diff=target-rounded.reduce((s,c)=>s+c.val,0);
-    const sorted=[...rounded.map((r,i)=>({...r,i}))].sort((a,b)=>b.rem-a.rem);
-    for(let j=0;j<diff&&j<sorted.length;j++){rounded[sorted[j].i].val+=1;}
-    const r=[e.name];let rt=0;
-    rounded.forEach(c=>{r.push(c.val);rt+=c.val;});
+    const start=allCells.length;
+    sovSplits.forEach(sp=>{allCells.push(ev*(sp.pct/100));});
+    rowNames.push({name:e.name,start,count:sovSplits.length});
+  });
+  const target=Math.round(distributable);
+  const fl=allCells.map(v=>Math.floor(v));
+  const rm=allCells.map((v,i)=>({i,rem:v-fl[i]})).sort((a,b)=>b.rem-a.rem);
+  let diff=target-fl.reduce((s,v)=>s+v,0);
+  for(let j=0;j<diff&&j<rm.length;j++){fl[rm[j].i]+=1;}
+
+  const rows=[];
+  rowNames.forEach(rn=>{
+    const r=[rn.name];let rt=0;
+    for(let k=rn.start;k<rn.start+rn.count;k++){r.push(fl[k]);rt+=fl[k];}
     r.push(rt);rows.push(r);
   });
   sovMiscItems.forEach(m=>{if(m.value<=0&&!m.name)return;rows.push([m.name||'Misc Item','','','','','',Math.round(m.value)]);});
@@ -1087,18 +1103,28 @@ async function exportPDF(){
     doc.text(`Contract: ${fmtWhole(contract)}    Misc Items: ${fmtWhole(miscTotal)}    Distributable: ${fmtWhole(distributable)}`,10,y+4);y+=10;
 
     const hdr=['Item','Scaffolding','Lath','Scratch','Brown','Finish','Total'];
-    const rows=[];
-    let colSums={};sovSplits.forEach(sp=>{colSums[sp.id]=0;});let grandTotal=0;
+    // Global rounding
+    const allCells=[];const rowNames=[];
     sovElevations.forEach(e=>{
       const lf=parseFloat(e.lf)||0;const pct=totalLF>0?(lf/totalLF):0;const ev=distributable*pct;
       if(ev<=0)return;
-      const cells=sovSplits.map(sp=>({id:sp.id,raw:ev*(sp.pct/100)}));
-      const rounded=cells.map(c=>({id:c.id,val:Math.floor(c.raw),rem:c.raw-Math.floor(c.raw)}));
-      const target=Math.round(ev);let diff=target-rounded.reduce((s,c)=>s+c.val,0);
-      const sorted=[...rounded.map((r,i)=>({...r,i}))].sort((a,b)=>b.rem-a.rem);
-      for(let j=0;j<diff&&j<sorted.length;j++){rounded[sorted[j].i].val+=1;}
-      const r=[e.name];let rt=0;
-      rounded.forEach(c=>{r.push(fmtWhole(c.val));colSums[c.id]+=c.val;rt+=c.val;});
+      const start=allCells.length;
+      sovSplits.forEach(sp=>{allCells.push(ev*(sp.pct/100));});
+      rowNames.push({name:e.name,start,count:sovSplits.length});
+    });
+    const target=Math.round(distributable);
+    const fl=allCells.map(v=>Math.floor(v));
+    const rems=allCells.map((v,i)=>({i,rem:v-fl[i]})).sort((a,b)=>b.rem-a.rem);
+    let diff=target-fl.reduce((s,v)=>s+v,0);
+    for(let j=0;j<diff&&j<rems.length;j++){fl[rems[j].i]+=1;}
+
+    const rows=[];let colSums={};sovSplits.forEach(sp=>{colSums[sp.id]=0;});let grandTotal=0;
+    rowNames.forEach(rn=>{
+      const r=[rn.name];let rt=0;
+      for(let k=rn.start;k<rn.start+rn.count;k++){
+        const v=fl[k];r.push(fmtWhole(v));
+        colSums[sovSplits[k-rn.start].id]+=v;rt+=v;
+      }
       r.push(fmtWhole(rt));grandTotal+=rt;rows.push(r);
     });
     sovMiscItems.forEach(m=>{if(m.value<=0&&!m.name)return;const mv=Math.round(m.value);rows.push([m.name||'Misc Item','—','—','—','—','—',fmtWhole(mv)]);grandTotal+=mv;});
@@ -1271,53 +1297,60 @@ function calcSOV(){
 
   updateSovElevationCalcs();
 
-  // Build breakdown table
   const body=document.getElementById('sov-breakdown-body');if(!body)return;body.innerHTML='';
   sovData=[];
-  let colTotals={scaffold:0,lath:0,scratch:0,brown:0,finish:0,total:0};
 
-  // Step 1: Calculate raw (unrounded) values for all elevation cells
-  const rawRows=[];
+  // Step 1: Collect ALL raw cell values across all elevations
+  const allCells=[]; // {rowIdx, splitIdx, id, raw}
+  const rowMeta=[]; // {name, startIdx, count}
+  let idx=0;
   sovElevations.forEach(e=>{
     const lf=parseFloat(e.lf)||0;
     const pct=totalLF>0?(lf/totalLF):0;
     const elevVal=distributable*pct;
     if(elevVal<=0)return;
-    const cells=[];
-    sovSplits.forEach(sp=>{cells.push({id:sp.id,raw:elevVal*(sp.pct/100)});});
-    rawRows.push({name:e.name,cells,rawTotal:elevVal});
+    const start=idx;
+    sovSplits.forEach((sp,si)=>{
+      allCells.push({rowIdx:rowMeta.length,splitIdx:si,id:sp.id,raw:elevVal*(sp.pct/100)});
+      idx++;
+    });
+    rowMeta.push({name:e.name,startIdx:start,count:sovSplits.length});
   });
 
-  // Step 2: Smart rounding — round each cell, then fix rounding errors per row
-  rawRows.forEach(rr=>{
-    const row={name:rr.name,type:'elevation'};
-    // Round each task value down
-    const rounded=rr.cells.map(c=>({id:c.id,val:Math.floor(c.raw),remainder:c.raw-Math.floor(c.raw)}));
-    const roundedRowTotal=rounded.reduce((s,c)=>s+c.val,0);
-    const targetRowTotal=Math.round(rr.rawTotal);
-    let diff=targetRowTotal-roundedRowTotal;
-    // Distribute leftover dollars to cells with largest remainders
-    const sorted=[...rounded].sort((a,b)=>b.remainder-a.remainder);
-    for(let i=0;i<diff&&i<sorted.length;i++){sorted[i].val+=1;}
+  // Step 2: Global largest-remainder rounding so all cells sum to exactly distributable
+  const target=Math.round(distributable);
+  const floored=allCells.map(c=>Math.floor(c.raw));
+  const remainders=allCells.map((c,i)=>({i,rem:c.raw-floored[i]}));
+  let flooredSum=floored.reduce((s,v)=>s+v,0);
+  let diff=target-flooredSum;
+  remainders.sort((a,b)=>b.rem-a.rem);
+  for(let j=0;j<diff&&j<remainders.length;j++){floored[remainders[j].i]+=1;}
 
+  // Step 3: Build rows from rounded values
+  let colTotals={scaffold:0,lath:0,scratch:0,brown:0,finish:0,total:0};
+
+  rowMeta.forEach((rm,ri)=>{
+    const row={name:rm.name,type:'elevation'};
     let rowTotal=0;
-    rounded.forEach(c=>{
-      row[c.id]=c.val;
-      colTotals[c.id]+=c.val;
-      rowTotal+=c.val;
-    });
+    for(let k=rm.startIdx;k<rm.startIdx+rm.count;k++){
+      const cell=allCells[k];
+      const val=floored[k];
+      row[cell.id]=val;
+      colTotals[cell.id]+=val;
+      rowTotal+=val;
+    }
     row.total=rowTotal;
     colTotals.total+=rowTotal;
     sovData.push(row);
 
     const tr=document.createElement('tr');
-    tr.innerHTML=`<td style="font-weight:500;">${esc(rr.name)}</td>
+    tr.innerHTML=`<td style="font-weight:500;">${esc(rm.name)}</td>
       ${sovSplits.map(sp=>`<td class="text-right mono">${fmtWhole(row[sp.id])}</td>`).join('')}
       <td class="text-right mono" style="font-weight:600;">${fmtWhole(rowTotal)}</td>`;
     body.appendChild(tr);
   });
 
-  // Misc items as standalone rows
+  // Misc items
   sovMiscItems.forEach(m=>{
     if(m.value<=0&&!m.name)return;
     const mv=Math.round(m.value);
@@ -1345,9 +1378,9 @@ function calcSOV(){
   // Balance check
   const bc=document.getElementById('sov-balance-check');
   if(contract>0){
-    const diff=colTotals.total-Math.round(contract);
-    if(diff===0){bc.innerHTML='<span style="color:var(--green-600);">✓ Balanced — matches contract amount</span>';}
-    else{bc.innerHTML=`<span style="color:var(--red-600);">⚠ Off by ${fmtWhole(Math.abs(diff))} from contract amount</span>`;}
+    const d=colTotals.total-Math.round(contract);
+    if(d===0){bc.innerHTML='<span style="color:var(--green-600);">✓ Balanced — matches contract amount</span>';}
+    else{bc.innerHTML=`<span style="color:var(--red-600);">⚠ Off by ${fmtWhole(Math.abs(d))} from contract amount</span>`;}
   }else{bc.innerHTML='';}
 }
 
