@@ -3,764 +3,300 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Schedule Builder Pro</title>
+<title>KenyonCore</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
-:root {
-  --orange-600: #F26B21;
-  --orange-500: #F47B3B;
-  --orange-400: #F69A5E;
-  --orange-100: #FEF0E6;
-  --navy-900: #1B2A4A;
-  --navy-800: #243558;
-  --navy-700: #2D4166;
-  --navy-600: #3A5078;
-  --gray-900: #1A1D26;
-  --gray-800: #2A2E3A;
-  --gray-700: #3D4255;
-  --gray-600: #555B6E;
-  --gray-500: #6E7489;
-  --gray-400: #9197AB;
-  --gray-300: #B8BDD0;
-  --gray-200: #D6DAE5;
-  --gray-100: #ECEEF4;
-  --gray-50: #F5F6FA;
-  --white: #FFFFFF;
-  --green-600: #16A34A;
-  --green-100: #DCFCE7;
-  --red-600: #DC2626;
-  --red-100: #FEE2E2;
-  --blue-600: #2563EB;
-  --blue-100: #DBEAFE;
-  --yellow-500: #EAB308;
-  --yellow-100: #FEF9C3;
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --shadow-sm: 0 1px 2px rgba(27,42,74,0.06);
-  --shadow-md: 0 4px 12px rgba(27,42,74,0.08);
-  --shadow-lg: 0 8px 30px rgba(27,42,74,0.12);
-  --transition: 150ms cubic-bezier(0.4,0,0.2,1);
-}
+:root{--accent:#1B3A6B;--accent-hover:#24508F;--accent-light:#E8EEF6;--navy-900:#1B2A4A;--navy-800:#243558;--gray-900:#1A1D26;--gray-800:#2A2E3A;--gray-700:#3D4255;--gray-600:#555B6E;--gray-500:#6E7489;--gray-400:#9197AB;--gray-300:#B8BDD0;--gray-200:#D6DAE5;--gray-100:#ECEEF4;--gray-50:#F5F6FA;--white:#FFFFFF;--green-600:#16A34A;--green-100:#DCFCE7;--red-600:#DC2626;--blue-600:#2563EB;--yellow-500:#EAB308;--yellow-100:#FEF9C3;--radius-sm:6px;--radius-md:8px;--radius-lg:12px;--shadow-sm:0 1px 2px rgba(27,42,74,0.06);--shadow-md:0 4px 12px rgba(27,42,74,0.08);--shadow-lg:0 8px 30px rgba(27,42,74,0.12);--transition:150ms cubic-bezier(0.4,0,0.2,1)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--gray-50);color:var(--gray-900);min-height:100vh}
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
+.topnav{background:var(--navy-900);height:56px;display:flex;align-items:center;padding:0 24px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,0.2)}
+.topnav-logo{display:flex;align-items:center;gap:10px;color:var(--white);font-weight:700;font-size:18px;letter-spacing:-0.5px}
+.topnav-logo .kc-mark{font-weight:400;opacity:0.5;margin-left:2px}
+.topnav-center{flex:1;display:flex;justify-content:center;gap:4px}
+.topnav-tab{color:var(--gray-400);padding:8px 16px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;cursor:pointer;transition:var(--transition);border:none;background:none}
+.topnav-tab:hover{color:var(--gray-200);background:rgba(255,255,255,0.06)}
+.topnav-tab.active{color:var(--white);background:rgba(255,255,255,0.1)}
+.topnav-right{display:flex;align-items:center;gap:12px}
 
-body {
-  font-family: 'DM Sans', -apple-system, sans-serif;
-  background: var(--gray-50);
-  color: var(--gray-900);
-  min-height: 100vh;
-}
+.page-header{background:var(--white);border-bottom:1px solid var(--gray-200);padding:20px 32px}
+.page-header-inner{max-width:1400px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
+.page-title-group{display:flex;align-items:center;gap:12px}
+.page-title{font-size:22px;font-weight:700;color:var(--gray-900);letter-spacing:-0.5px}
+.badge{font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:0.5px}
+.badge-draft{background:var(--yellow-100);color:#92400E}
+.badge-active{background:var(--green-100);color:#166534}
+.page-actions{display:flex;gap:8px}
 
-/* ─── TOP NAV ─── */
-.topnav {
-  background: var(--navy-900);
-  height: 56px;
-  display: flex;
-  align-items: center;
-  padding: 0 24px;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-}
-.topnav-logo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: var(--white);
-  font-weight: 700;
-  font-size: 17px;
-  letter-spacing: -0.3px;
-}
-.topnav-logo .icon {
-  width: 32px;
-  height: 32px;
-  background: var(--orange-600);
-  border-radius: var(--radius-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-}
-.topnav-center {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  gap: 4px;
-}
-.topnav-tab {
-  color: var(--gray-400);
-  padding: 8px 16px;
-  border-radius: var(--radius-sm);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: var(--transition);
-  border: none;
-  background: none;
-}
-.topnav-tab:hover { color: var(--gray-200); background: rgba(255,255,255,0.06); }
-.topnav-tab.active { color: var(--white); background: rgba(255,255,255,0.1); }
-.topnav-right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:var(--radius-sm);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:var(--transition);border:none;white-space:nowrap}
+.btn-primary{background:var(--accent);color:var(--white)}
+.btn-primary:hover{background:var(--accent-hover);transform:translateY(-1px);box-shadow:0 4px 12px rgba(27,58,107,0.3)}
+.btn-secondary{background:var(--white);color:var(--gray-700);border:1px solid var(--gray-300)}
+.btn-secondary:hover{background:var(--gray-50);border-color:var(--gray-400)}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-icon{width:34px;height:34px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:var(--radius-sm);background:var(--white);border:1px solid var(--gray-200);color:var(--gray-500);cursor:pointer;transition:var(--transition)}
+.btn-icon:hover{background:var(--gray-50);color:var(--gray-900);border-color:var(--gray-400)}
 
-/* ─── PAGE HEADER ─── */
-.page-header {
-  background: var(--white);
-  border-bottom: 1px solid var(--gray-200);
-  padding: 20px 32px;
-}
-.page-header-inner {
-  max-width: 1400px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-.page-title-group { display: flex; align-items: center; gap: 12px; }
-.page-title {
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--gray-900);
-  letter-spacing: -0.5px;
-}
-.badge {
-  font-size: 11px;
-  font-weight: 600;
-  padding: 3px 10px;
-  border-radius: 20px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-.badge-draft { background: var(--yellow-100); color: #92400E; }
-.badge-active { background: var(--green-100); color: #166534; }
-.page-actions { display: flex; gap: 8px; }
+.main-content{max-width:1400px;margin:0 auto;padding:24px 32px 60px;display:grid;grid-template-columns:340px 1fr;gap:24px}
+@media(max-width:1024px){.main-content{grid-template-columns:1fr}}
 
-/* ─── BUTTONS ─── */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 9px 16px;
-  border-radius: var(--radius-sm);
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: var(--transition);
-  border: none;
-  white-space: nowrap;
-}
-.btn-primary { background: var(--orange-600); color: var(--white); }
-.btn-primary:hover { background: var(--orange-500); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(242,107,33,0.3); }
-.btn-secondary { background: var(--white); color: var(--gray-700); border: 1px solid var(--gray-300); }
-.btn-secondary:hover { background: var(--gray-50); border-color: var(--gray-400); }
-.btn-danger { background: var(--white); color: var(--red-600); border: 1px solid var(--gray-300); }
-.btn-danger:hover { background: var(--red-100); border-color: var(--red-600); }
-.btn-ghost { background: transparent; color: var(--gray-600); }
-.btn-ghost:hover { background: var(--gray-100); color: var(--gray-900); }
-.btn-sm { padding: 5px 10px; font-size: 12px; }
-.btn-icon {
-  width: 34px; height: 34px; padding: 0;
-  display: inline-flex; align-items: center; justify-content: center;
-  border-radius: var(--radius-sm);
-  background: var(--white);
-  border: 1px solid var(--gray-200);
-  color: var(--gray-500);
-  cursor: pointer;
-  transition: var(--transition);
-}
-.btn-icon:hover { background: var(--gray-50); color: var(--gray-900); border-color: var(--gray-400); }
+.card{background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);overflow:hidden}
+.card-header{padding:16px 20px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:14px;font-weight:700;color:var(--gray-800);text-transform:uppercase;letter-spacing:0.5px}
+.card-body{padding:16px 20px}
+.sidebar{display:flex;flex-direction:column;gap:20px}
 
-/* ─── LAYOUT ─── */
-.main-content {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 24px 32px 60px;
-  display: grid;
-  grid-template-columns: 340px 1fr;
-  gap: 24px;
-}
-@media (max-width: 1024px) {
-  .main-content { grid-template-columns: 1fr; }
-}
+.form-group{margin-bottom:14px}
+.form-group:last-child{margin-bottom:0}
+.form-label{display:block;font-size:12px;font-weight:600;color:var(--gray-600);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.4px}
+.form-input{width:100%;padding:9px 12px;border:1px solid var(--gray-200);border-radius:var(--radius-sm);font-family:inherit;font-size:14px;color:var(--gray-900);background:var(--white);transition:var(--transition)}
+.form-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(27,58,107,0.1)}
+.form-input-mono{font-family:'JetBrains Mono',monospace;font-size:13px}
 
-/* ─── CARDS ─── */
-.card {
-  background: var(--white);
-  border: 1px solid var(--gray-200);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  overflow: hidden;
-}
-.card-header {
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--gray-100);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.card-title {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--gray-800);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-.card-body { padding: 16px 20px; }
+.rate-row{display:flex;align-items:center;padding:10px 0;border-bottom:1px solid var(--gray-100);gap:10px}
+.rate-row:last-child{border-bottom:none}
+.rate-check{width:18px;height:18px;accent-color:var(--accent);cursor:pointer;flex-shrink:0}
+.rate-label{font-size:13px;font-weight:500;color:var(--gray-800);flex:1;min-width:70px}
+.rate-input{width:90px;padding:6px 8px;border:1px solid var(--gray-200);border-radius:var(--radius-sm);font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--gray-900);text-align:right;transition:var(--transition)}
+.rate-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(27,58,107,0.1)}
+.rate-unit{font-size:11px;color:var(--gray-500);white-space:nowrap}
 
-/* ─── SIDEBAR ─── */
-.sidebar { display: flex; flex-direction: column; gap: 20px; }
+.phase-table{width:100%;border-collapse:collapse}
+.phase-table th{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--gray-500);padding:10px 12px;text-align:left;background:var(--gray-50);border-bottom:1px solid var(--gray-200)}
+.phase-table td{padding:8px 12px;border-bottom:1px solid var(--gray-100);vertical-align:middle}
+.phase-table tr:hover td{background:var(--gray-50)}
+.phase-table .phase-name-input{border:1px solid transparent;padding:6px 8px;border-radius:var(--radius-sm);font-family:inherit;font-size:14px;font-weight:500;color:var(--gray-900);width:100%;background:transparent;transition:var(--transition)}
+.phase-table .phase-name-input:hover{border-color:var(--gray-200);background:var(--gray-50)}
+.phase-table .phase-name-input:focus{border-color:var(--accent);outline:none;background:var(--white);box-shadow:0 0 0 3px rgba(27,58,107,0.1)}
+.phase-table .phase-yards-input{border:1px solid transparent;padding:6px 8px;border-radius:var(--radius-sm);font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--gray-900);width:100px;text-align:right;background:transparent;transition:var(--transition)}
+.phase-table .phase-yards-input:hover{border-color:var(--gray-200);background:var(--gray-50)}
+.phase-table .phase-yards-input:focus{border-color:var(--accent);outline:none;background:var(--white);box-shadow:0 0 0 3px rgba(27,58,107,0.1)}
+.phase-drag-handle{cursor:grab;color:var(--gray-400);font-size:14px;padding:4px;user-select:none}
+.phase-number{width:24px;height:24px;border-radius:50%;background:var(--navy-800);color:var(--white);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 
-/* ─── FORM ELEMENTS ─── */
-.form-group { margin-bottom: 14px; }
-.form-group:last-child { margin-bottom: 0; }
-.form-label {
-  display: block;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--gray-600);
-  margin-bottom: 5px;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-}
-.form-input, .form-select {
-  width: 100%;
-  padding: 9px 12px;
-  border: 1px solid var(--gray-200);
-  border-radius: var(--radius-sm);
-  font-family: inherit;
-  font-size: 14px;
-  color: var(--gray-900);
-  background: var(--white);
-  transition: var(--transition);
-}
-.form-input:focus, .form-select:focus {
-  outline: none;
-  border-color: var(--orange-600);
-  box-shadow: 0 0 0 3px rgba(242,107,33,0.1);
-}
-.form-input::placeholder { color: var(--gray-400); }
-.form-input-mono {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 13px;
-}
+.schedule-table{width:100%;border-collapse:collapse}
+.schedule-table th{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--gray-500);padding:10px 14px;text-align:left;background:var(--gray-50);border-bottom:2px solid var(--gray-200);position:sticky;top:0}
+.schedule-table td{padding:9px 14px;border-bottom:1px solid var(--gray-100);font-size:13px}
+.schedule-table tr:hover td{background:rgba(27,58,107,0.03)}
+.schedule-table .phase-group td{background:var(--gray-50);font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:0.3px;color:var(--gray-700);border-bottom:1px solid var(--gray-200)}
+.schedule-table .phase-total td{background:var(--accent-light);font-weight:700;font-size:12px;color:var(--navy-900);border-top:2px solid var(--accent);border-bottom:2px solid var(--accent)}
+.task-badge{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500}
+.task-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.task-dot-scaffold{background:var(--navy-800)}
+.task-dot-lath{background:var(--blue-600)}
+.task-dot-scratch{background:var(--accent)}
+.task-dot-cure{background:var(--gray-400)}
+.task-dot-brown{background:var(--yellow-500)}
+.task-dot-finish{background:var(--green-600)}
+.mono{font-family:'JetBrains Mono',monospace;font-size:12px}
+.text-right{text-align:right}
+.text-muted{color:var(--gray-500)}
 
-/* ─── PRODUCTION RATE TABLE ─── */
-.rate-table { width: 100%; }
-.rate-row {
-  display: flex;
-  align-items: center;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--gray-100);
-  gap: 10px;
-}
-.rate-row:last-child { border-bottom: none; }
-.rate-check {
-  width: 18px;
-  height: 18px;
-  accent-color: var(--orange-600);
-  cursor: pointer;
-  flex-shrink: 0;
-}
-.rate-label {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--gray-800);
-  flex: 1;
-  min-width: 70px;
-}
-.rate-input {
-  width: 90px;
-  padding: 6px 8px;
-  border: 1px solid var(--gray-200);
-  border-radius: var(--radius-sm);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 13px;
-  color: var(--gray-900);
-  text-align: right;
-  transition: var(--transition);
-}
-.rate-input:focus {
-  outline: none;
-  border-color: var(--orange-600);
-  box-shadow: 0 0 0 3px rgba(242,107,33,0.1);
-}
-.rate-unit {
-  font-size: 11px;
-  color: var(--gray-500);
-  white-space: nowrap;
-}
+.gantt-container{overflow-x:auto;padding:16px 20px 20px}
+.gantt-header-row{display:flex;border-bottom:1px solid var(--gray-200);margin-bottom:2px;padding-left:180px}
+.gantt-date-label{font-size:10px;font-weight:600;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.3px;text-align:center;border-left:1px solid var(--gray-100);padding:4px 0}
+.gantt-row{display:flex;align-items:center;min-height:30px;position:relative}
+.gantt-label{width:180px;flex-shrink:0;font-size:12px;font-weight:500;color:var(--gray-700);padding-right:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gantt-track{flex:1;position:relative;height:22px}
+.gantt-bar{position:absolute;height:20px;border-radius:4px;top:1px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:var(--white);min-width:4px;transition:opacity 150ms;cursor:default}
+.gantt-bar:hover{opacity:0.85}
+.gantt-bar-scaffold{background:var(--navy-800)}
+.gantt-bar-lath{background:var(--blue-600)}
+.gantt-bar-scratch{background:var(--accent)}
+.gantt-bar-cure{background:repeating-linear-gradient(45deg,var(--gray-300),var(--gray-300) 3px,var(--gray-400) 3px,var(--gray-400) 6px);color:var(--gray-700)}
+.gantt-bar-brown{background:var(--yellow-500);color:var(--gray-900)}
+.gantt-bar-finish{background:var(--green-600)}
+.gantt-phase-header{font-size:11px;font-weight:700;color:var(--gray-700);text-transform:uppercase;letter-spacing:0.3px;padding:10px 0 4px 0;border-bottom:1px solid var(--gray-100);margin-top:4px}
 
-/* ─── PHASE TABLE ─── */
-.phase-table { width: 100%; border-collapse: collapse; }
-.phase-table th {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--gray-500);
-  padding: 10px 12px;
-  text-align: left;
-  background: var(--gray-50);
-  border-bottom: 1px solid var(--gray-200);
-}
-.phase-table td {
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--gray-100);
-  vertical-align: middle;
-}
-.phase-table tr:hover td { background: var(--gray-50); }
-.phase-table .phase-name-input {
-  border: 1px solid transparent;
-  padding: 6px 8px;
-  border-radius: var(--radius-sm);
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--gray-900);
-  width: 100%;
-  background: transparent;
-  transition: var(--transition);
-}
-.phase-table .phase-name-input:hover { border-color: var(--gray-200); background: var(--gray-50); }
-.phase-table .phase-name-input:focus { border-color: var(--orange-600); outline: none; background: var(--white); box-shadow: 0 0 0 3px rgba(242,107,33,0.1); }
-.phase-table .phase-yards-input {
-  border: 1px solid transparent;
-  padding: 6px 8px;
-  border-radius: var(--radius-sm);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 13px;
-  color: var(--gray-900);
-  width: 100px;
-  text-align: right;
-  background: transparent;
-  transition: var(--transition);
-}
-.phase-table .phase-yards-input:hover { border-color: var(--gray-200); background: var(--gray-50); }
-.phase-table .phase-yards-input:focus { border-color: var(--orange-600); outline: none; background: var(--white); box-shadow: 0 0 0 3px rgba(242,107,33,0.1); }
-.phase-drag-handle {
-  cursor: grab;
-  color: var(--gray-400);
-  font-size: 14px;
-  padding: 4px;
-  user-select: none;
-}
-.phase-drag-handle:active { cursor: grabbing; }
-.phase-number {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: var(--navy-800);
-  color: var(--white);
-  font-size: 11px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
+.view-tabs{display:flex;gap:2px;background:var(--gray-100);padding:3px;border-radius:var(--radius-md);width:fit-content}
+.view-tab{padding:7px 16px;font-size:13px;font-weight:600;border:none;border-radius:var(--radius-sm);cursor:pointer;transition:var(--transition);background:transparent;color:var(--gray-600);font-family:inherit}
+.view-tab.active{background:var(--white);color:var(--gray-900);box-shadow:var(--shadow-sm)}
+.view-tab:hover:not(.active){color:var(--gray-800)}
+.tab-content{display:none}
+.tab-content.active{display:block}
 
-/* ─── SCHEDULE OUTPUT TABLE ─── */
-.schedule-table { width: 100%; border-collapse: collapse; }
-.schedule-table th {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--gray-500);
-  padding: 10px 14px;
-  text-align: left;
-  background: var(--gray-50);
-  border-bottom: 2px solid var(--gray-200);
-  position: sticky;
-  top: 0;
-}
-.schedule-table td {
-  padding: 9px 14px;
-  border-bottom: 1px solid var(--gray-100);
-  font-size: 13px;
-}
-.schedule-table tr:hover td { background: rgba(242,107,33,0.03); }
-.schedule-table .phase-group td { 
-  background: var(--gray-50);
-  font-weight: 700;
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-  color: var(--gray-700);
-  border-bottom: 1px solid var(--gray-200);
-}
-.task-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  font-weight: 500;
-}
-.task-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-.task-dot-scaffold { background: var(--navy-800); }
-.task-dot-lath { background: var(--blue-600); }
-.task-dot-scratch { background: var(--orange-600); }
-.task-dot-cure { background: var(--gray-400); }
-.task-dot-brown { background: var(--yellow-500); }
-.task-dot-finish { background: var(--green-600); }
-.mono { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
-.text-right { text-align: right; }
-.text-muted { color: var(--gray-500); }
+.stats-row{display:flex;gap:12px;flex-wrap:wrap}
+.stat-card{flex:1;min-width:120px;background:var(--gray-50);border:1px solid var(--gray-100);border-radius:var(--radius-md);padding:14px 16px}
+.stat-value{font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;color:var(--gray-900);line-height:1;margin-bottom:4px}
+.stat-label{font-size:11px;font-weight:600;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.4px}
 
-/* ─── GANTT CHART ─── */
-.gantt-container {
-  overflow-x: auto;
-  padding: 16px 20px 20px;
-}
-.gantt-header-row {
-  display: flex;
-  border-bottom: 1px solid var(--gray-200);
-  margin-bottom: 2px;
-  padding-left: 180px;
-}
-.gantt-date-label {
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--gray-500);
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-  text-align: center;
-  border-left: 1px solid var(--gray-100);
-  padding: 4px 0;
-}
-.gantt-row {
-  display: flex;
-  align-items: center;
-  min-height: 30px;
-  position: relative;
-}
-.gantt-label {
-  width: 180px;
-  flex-shrink: 0;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--gray-700);
-  padding-right: 12px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.gantt-track {
-  flex: 1;
-  position: relative;
-  height: 22px;
-}
-.gantt-bar {
-  position: absolute;
-  height: 20px;
-  border-radius: 4px;
-  top: 1px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--white);
-  min-width: 4px;
-  transition: opacity 150ms;
-  cursor: default;
-}
-.gantt-bar:hover { opacity: 0.85; }
-.gantt-bar-scaffold { background: var(--navy-800); }
-.gantt-bar-lath { background: var(--blue-600); }
-.gantt-bar-scratch { background: var(--orange-600); }
-.gantt-bar-cure { background: var(--gray-400); background: repeating-linear-gradient(45deg, var(--gray-300), var(--gray-300) 3px, var(--gray-400) 3px, var(--gray-400) 6px); color: var(--gray-700); }
-.gantt-bar-brown { background: var(--yellow-500); color: var(--gray-900); }
-.gantt-bar-finish { background: var(--green-600); }
-.gantt-phase-header {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--gray-700);
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-  padding: 10px 0 4px 0;
-  border-bottom: 1px solid var(--gray-100);
-  margin-top: 4px;
-}
-.gantt-today-line {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background: var(--red-600);
-  z-index: 5;
-  pointer-events: none;
-}
-.gantt-today-label {
-  position: absolute;
-  top: -16px;
-  transform: translateX(-50%);
-  font-size: 9px;
-  font-weight: 700;
-  color: var(--red-600);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-.gantt-weekend {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  background: rgba(0,0,0,0.02);
-  pointer-events: none;
-}
+.tooltip{position:absolute;background:var(--gray-900);color:var(--white);padding:8px 12px;border-radius:var(--radius-sm);font-size:12px;pointer-events:none;z-index:200;box-shadow:var(--shadow-lg);white-space:nowrap;display:none}
 
-/* ─── TABS ─── */
-.view-tabs {
-  display: flex;
-  gap: 2px;
-  background: var(--gray-100);
-  padding: 3px;
-  border-radius: var(--radius-md);
-  width: fit-content;
-}
-.view-tab {
-  padding: 7px 16px;
-  font-size: 13px;
-  font-weight: 600;
-  border: none;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: var(--transition);
-  background: transparent;
-  color: var(--gray-600);
-  font-family: inherit;
-}
-.view-tab.active { background: var(--white); color: var(--gray-900); box-shadow: var(--shadow-sm); }
-.view-tab:hover:not(.active) { color: var(--gray-800); }
+.empty-state{text-align:center;padding:48px 24px;color:var(--gray-500)}
+.empty-state-icon{font-size:48px;margin-bottom:12px;opacity:0.5}
+.empty-state-text{font-size:14px;font-weight:500}
+.empty-state-sub{font-size:13px;color:var(--gray-400);margin-top:6px}
 
-.tab-content { display: none; }
-.tab-content.active { display: block; }
+/* ─── MODAL ─── */
+.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(26,29,38,0.5);backdrop-filter:blur(4px);z-index:500;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--white);border-radius:var(--radius-lg);box-shadow:0 20px 60px rgba(0,0,0,0.25);width:520px;max-width:95vw;max-height:90vh;overflow-y:auto;animation:modalIn 200ms ease-out}
+@keyframes modalIn{from{opacity:0;transform:scale(0.95) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.modal-header{padding:20px 24px 16px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:18px;font-weight:700;color:var(--gray-900)}
+.modal-close{width:32px;height:32px;border:none;background:var(--gray-100);border-radius:50%;cursor:pointer;font-size:16px;color:var(--gray-600);display:flex;align-items:center;justify-content:center;transition:var(--transition)}
+.modal-close:hover{background:var(--gray-200);color:var(--gray-900)}
+.modal-body{padding:20px 24px}
+.modal-footer{padding:16px 24px 20px;border-top:1px solid var(--gray-100);display:flex;justify-content:flex-end;gap:8px}
 
-/* ─── SUMMARY STATS ─── */
-.stats-row {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-.stat-card {
-  flex: 1;
-  min-width: 120px;
-  background: var(--gray-50);
-  border: 1px solid var(--gray-100);
-  border-radius: var(--radius-md);
-  padding: 14px 16px;
-}
-.stat-value {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--gray-900);
-  line-height: 1;
-  margin-bottom: 4px;
-}
-.stat-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--gray-500);
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-}
+.export-section{margin-bottom:20px}
+.export-section:last-child{margin-bottom:0}
+.export-section-title{font-size:12px;font-weight:700;color:var(--gray-600);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px}
+.export-option-group{display:flex;gap:8px}
+.export-option{flex:1;padding:12px 14px;border:2px solid var(--gray-200);border-radius:var(--radius-md);cursor:pointer;transition:var(--transition);text-align:center;background:var(--white)}
+.export-option:hover{border-color:var(--gray-300);background:var(--gray-50)}
+.export-option.selected{border-color:var(--accent);background:var(--accent-light)}
+.export-option-icon{font-size:24px;margin-bottom:4px}
+.export-option-label{font-size:13px;font-weight:600;color:var(--gray-800)}
+.export-option-sub{font-size:11px;color:var(--gray-500);margin-top:2px}
 
-/* ─── TOOLTIPS ─── */
-.tooltip {
-  position: absolute;
-  background: var(--gray-900);
-  color: var(--white);
-  padding: 8px 12px;
-  border-radius: var(--radius-sm);
-  font-size: 12px;
-  pointer-events: none;
-  z-index: 200;
-  box-shadow: var(--shadow-lg);
-  white-space: nowrap;
-  display: none;
-}
+.column-toggle-list{display:flex;flex-direction:column;gap:6px}
+.column-toggle{display:flex;align-items:center;gap:10px;padding:8px 12px;border:1px solid var(--gray-100);border-radius:var(--radius-sm);cursor:pointer;transition:var(--transition)}
+.column-toggle:hover{background:var(--gray-50)}
+.column-toggle input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer}
+.column-toggle label{font-size:13px;font-weight:500;color:var(--gray-800);cursor:pointer;flex:1}
+.column-toggle .col-preview{font-size:11px;color:var(--gray-400);font-style:italic}
 
-/* ─── EMPTY STATE ─── */
-.empty-state {
-  text-align: center;
-  padding: 48px 24px;
-  color: var(--gray-500);
-}
-.empty-state-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.5; }
-.empty-state-text { font-size: 14px; font-weight: 500; }
-.empty-state-sub { font-size: 13px; color: var(--gray-400); margin-top: 6px; }
+.gantt-toggle{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--gray-200);border-radius:var(--radius-sm);margin-top:10px}
+.gantt-toggle input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer}
+.gantt-toggle label{font-size:13px;font-weight:500;color:var(--gray-800);cursor:pointer}
 
-/* ─── ANIMATIONS ─── */
-@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-.animate-in { animation: fadeIn 300ms cubic-bezier(0.4,0,0.2,1) forwards; }
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.animate-in{animation:fadeIn 300ms cubic-bezier(0.4,0,0.2,1) forwards}
 
-/* ─── SCROLLBAR ─── */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--gray-400); }
+.misc-item{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.misc-item input[type="text"]{flex:1;padding:6px 8px;border:1px solid var(--gray-200);border-radius:var(--radius-sm);font-family:inherit;font-size:13px;transition:var(--transition)}
+.misc-item input[type="text"]:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(27,58,107,0.1)}
+.misc-item .misc-val{width:110px;font-family:'JetBrains Mono',monospace;font-size:12px;text-align:right;padding-left:20px}
+.misc-item .misc-dollar{position:relative}
+.misc-item .misc-dollar span{position:absolute;left:6px;top:50%;transform:translateY(-50%);color:var(--gray-400);font-size:12px}
+.misc-remove{width:24px;height:24px;border:none;background:var(--gray-100);border-radius:50%;cursor:pointer;color:var(--gray-500);font-size:12px;display:flex;align-items:center;justify-content:center;transition:var(--transition);flex-shrink:0}
+.misc-remove:hover{background:var(--red-100);color:var(--red-600)}
+
+.sov-elev-value{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--gray-900);font-weight:500}
+.sov-pct{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--gray-600)}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--gray-300);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--gray-400)}
 </style>
 </head>
 <body>
 
-<!-- ─── TOP NAV ─── -->
 <nav class="topnav">
-  <div class="topnav-logo">
-    <div class="icon">📐</div>
-    Schedule Builder Pro
-  </div>
+  <div class="topnav-logo">Kenyon<span style="color:var(--gray-300);">Core</span></div>
   <div class="topnav-center">
-    <button class="topnav-tab active">Schedule</button>
-    <button class="topnav-tab">Reports</button>
+    <button class="topnav-tab active" onclick="switchPage('schedule')">Schedule</button>
+    <button class="topnav-tab" onclick="switchPage('sov')">SOV</button>
     <button class="topnav-tab">Settings</button>
   </div>
   <div class="topnav-right">
-    <button class="btn btn-sm btn-secondary" style="border-color: rgba(255,255,255,0.15); color: var(--gray-300);" onclick="exportCalendarSchedule()">⬇ Export CSV</button>
+    <button class="btn-icon" id="undo-btn" onclick="undo()" title="Undo (Ctrl+Z)" style="border-color:rgba(255,255,255,0.15);color:var(--gray-400);background:transparent;opacity:0.35;">↩</button>
+    <button class="btn-icon" id="redo-btn" onclick="redo()" title="Redo (Ctrl+Y)" style="border-color:rgba(255,255,255,0.15);color:var(--gray-400);background:transparent;opacity:0.35;">↪</button>
+    <button class="btn btn-sm btn-secondary" style="border-color:rgba(255,255,255,0.15);color:var(--gray-300);" onclick="openExportModal()">⬇ Export</button>
   </div>
 </nav>
 
-<!-- ─── PAGE HEADER ─── -->
+<!-- ═══ SCHEDULE PAGE ═══ -->
+<div id="page-schedule">
 <div class="page-header">
   <div class="page-header-inner">
     <div class="page-title-group">
-      <h1 class="page-title">Schedule Duration Builder</h1>
+      <h1 class="page-title" id="page-title">Schedule Builder</h1>
       <span class="badge badge-draft" id="status-badge">Draft</span>
     </div>
     <div class="page-actions">
       <button class="btn btn-secondary" onclick="resetAll()">↺ Reset</button>
+      <button class="btn btn-secondary" onclick="openExportModal()">⬇ Export</button>
       <button class="btn btn-primary" onclick="calculateSchedule()">▶ Calculate Schedule</button>
     </div>
   </div>
 </div>
 
-<!-- ─── MAIN CONTENT ─── -->
 <div class="main-content">
-  <!-- ─── SIDEBAR ─── -->
   <div class="sidebar">
-    <!-- Schedule Settings -->
     <div class="card animate-in">
-      <div class="card-header">
-        <span class="card-title">Schedule Settings</span>
-      </div>
+      <div class="card-header"><span class="card-title">Schedule Settings</span></div>
       <div class="card-body">
         <div class="form-group">
+          <label class="form-label">Job / Project Name</label>
+          <input type="text" class="form-input" id="job-name" placeholder="e.g. Sunrise Apartments — Building A" oninput="updateJobTitle();stateChanged();" />
+        </div>
+        <div class="form-group">
           <label class="form-label">Scaffolding Start Date</label>
-          <input type="date" class="form-input form-input-mono" id="scaff-start-date" onchange="calculateSchedule()" />
+          <input type="date" class="form-input form-input-mono" id="scaff-start-date" onchange="calculateSchedule();stateChanged();" />
         </div>
         <div class="form-group">
           <label class="form-label">Lath Start Date</label>
-          <input type="date" class="form-input form-input-mono" id="lath-start-date" onchange="calculateSchedule()" />
+          <input type="date" class="form-input form-input-mono" id="lath-start-date" onchange="calculateSchedule();stateChanged();" />
         </div>
       </div>
     </div>
 
-    <!-- Production Rates -->
-    <div class="card animate-in" style="animation-delay: 60ms;">
+    <div class="card animate-in" style="animation-delay:60ms;">
       <div class="card-header">
         <span class="card-title">Production Rates</span>
-        <span style="font-size: 11px; color: var(--gray-400);">yards/day</span>
+        <span style="font-size:11px;color:var(--gray-400);">yards/day</span>
       </div>
       <div class="card-body">
-        <div class="rate-table" id="rate-table">
-          <!-- Populated by JS -->
-        </div>
+        <div id="rate-table"></div>
       </div>
     </div>
 
-    <!-- Summary -->
-    <div class="card animate-in" style="animation-delay: 120ms;">
-      <div class="card-header">
-        <span class="card-title">Summary</span>
-      </div>
+    <div class="card animate-in" style="animation-delay:120ms;">
+      <div class="card-header"><span class="card-title">Summary</span></div>
       <div class="card-body">
-        <div class="stats-row" id="summary-stats">
-          <div class="stat-card">
-            <div class="stat-value" id="stat-phases">0</div>
-            <div class="stat-label">Phases</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value" id="stat-yards">0</div>
-            <div class="stat-label">Total Yards</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value" id="stat-days">—</div>
-            <div class="stat-label">Calendar Days</div>
-          </div>
+        <div class="stats-row">
+          <div class="stat-card"><div class="stat-value" id="stat-phases">0</div><div class="stat-label">Phases</div></div>
+          <div class="stat-card"><div class="stat-value" id="stat-yards">0</div><div class="stat-label">Total Yards</div></div>
+          <div class="stat-card"><div class="stat-value" id="stat-days">—</div><div class="stat-label">Calendar Days</div></div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- ─── MAIN AREA ─── -->
-  <div style="display: flex; flex-direction: column; gap: 20px;">
-    <!-- Phase Definitions -->
-    <div class="card animate-in" style="animation-delay: 80ms;">
+  <div style="display:flex;flex-direction:column;gap:20px;">
+    <div class="card animate-in" style="animation-delay:80ms;">
       <div class="card-header">
         <span class="card-title">Phase Definitions</span>
         <button class="btn btn-primary btn-sm" onclick="addPhase()">+ Add Phase</button>
       </div>
-      <div style="overflow-x: auto;">
+      <div style="overflow-x:auto;">
         <table class="phase-table">
-          <thead>
-            <tr>
-              <th style="width: 40px;"></th>
-              <th style="width: 36px;">#</th>
-              <th>Phase Name</th>
-              <th style="width: 130px; text-align: right;">Total Yards</th>
-              <th style="width: 60px;"></th>
-            </tr>
-          </thead>
+          <thead><tr>
+            <th style="width:40px;"></th><th style="width:36px;">#</th>
+            <th>Phase Name</th><th style="width:130px;text-align:right;">Total Yards</th><th style="width:60px;"></th>
+          </tr></thead>
           <tbody id="phases-body"></tbody>
         </table>
       </div>
     </div>
 
-    <!-- Schedule Output -->
-    <div class="card animate-in" style="animation-delay: 160ms;" id="output-card">
+    <div class="card animate-in" style="animation-delay:160ms;" id="output-card">
       <div class="card-header">
         <span class="card-title">Calculated Schedule</span>
         <div class="view-tabs">
-          <button class="view-tab active" onclick="switchView('table', this)">Table</button>
-          <button class="view-tab" onclick="switchView('gantt', this)">Gantt</button>
-          <button class="view-tab" onclick="switchView('calendar', this)">Calendar</button>
+          <button class="view-tab active" onclick="switchView('table',this)">Table</button>
+          <button class="view-tab" onclick="switchView('gantt',this)">Gantt</button>
+          <button class="view-tab" onclick="switchView('calendar',this)">Calendar</button>
         </div>
       </div>
-
-      <!-- Table View -->
       <div class="tab-content active" id="view-table">
-        <div style="overflow-x: auto;">
+        <div style="overflow-x:auto;">
           <table class="schedule-table">
-            <thead>
-              <tr>
-                <th>Phase</th>
-                <th>Task</th>
-                <th style="text-align: right;">Quantity</th>
-                <th style="text-align: right;">Rate</th>
-                <th style="text-align: right;">Duration</th>
-                <th>Start</th>
-                <th>End</th>
-              </tr>
-            </thead>
+            <thead><tr>
+              <th>Phase</th><th>Task</th><th style="text-align:right;">Quantity</th>
+              <th style="text-align:right;">Rate</th><th style="text-align:right;">Duration</th>
+              <th>Start</th><th>End</th>
+            </tr></thead>
             <tbody id="output-body"></tbody>
           </table>
         </div>
       </div>
-
-      <!-- Gantt View -->
       <div class="tab-content" id="view-gantt">
         <div class="gantt-container" id="gantt-container">
           <div class="empty-state">
@@ -770,560 +306,1056 @@ body {
           </div>
         </div>
       </div>
-
-      <!-- Calendar View -->
       <div class="tab-content" id="view-calendar">
-        <div style="overflow-x: auto;">
+        <div style="overflow-x:auto;">
           <table class="schedule-table">
-            <thead>
-              <tr>
-                <th>Phase</th>
-                <th>Task</th>
-                <th>Start Date</th>
-                <th>End Date</th>
-                <th style="text-align: right;">Work Days</th>
-              </tr>
-            </thead>
+            <thead><tr>
+              <th>Phase</th><th>Task</th><th>Start Date</th><th>End Date</th><th style="text-align:right;">Work Days</th>
+            </tr></thead>
             <tbody id="calendar-body"></tbody>
           </table>
         </div>
       </div>
-
-      <!-- Note -->
-      <div style="padding: 12px 20px; border-top: 1px solid var(--gray-100); font-size: 12px; color: var(--gray-500); line-height: 1.5;">
-        Durations are rounded up to the nearest whole day. Scaffolding occurs before lath; finish occurs after brown. 
-        Cure periods of <strong>2 calendar days</strong> (scratch → brown) and <strong>7 calendar days</strong> (brown → finish) are automatically inserted.
+      <div style="padding:12px 20px;border-top:1px solid var(--gray-100);font-size:12px;color:var(--gray-500);line-height:1.5;">
+        Durations rounded up to nearest whole day. Scaffolding before lath; finish after brown.
+        Cure periods: <strong>2 cal days</strong> (scratch→brown), <strong>7 cal days</strong> (brown→finish). Cure runs through weekends; work tasks skip weekends.
       </div>
     </div>
   </div>
 </div>
+</div><!-- end page-schedule -->
 
-<!-- Tooltip -->
+<!-- ═══ SOV PAGE ═══ -->
+<div id="page-sov" style="display:none;">
+<div class="page-header">
+  <div class="page-header-inner">
+    <div class="page-title-group">
+      <h1 class="page-title">Schedule of Values</h1>
+      <span class="badge" style="background:var(--blue-100);color:#1e40af;">SOV</span>
+    </div>
+    <div class="page-actions">
+      <button class="btn btn-secondary" onclick="resetSOV()">↺ Reset</button>
+      <button class="btn btn-secondary" onclick="openExportModal()">⬇ Export</button>
+    </div>
+  </div>
+</div>
+<div class="main-content">
+  <div class="sidebar">
+    <div class="card animate-in">
+      <div class="card-header"><span class="card-title">Contract Info</span></div>
+      <div class="card-body">
+        <div class="form-group">
+          <label class="form-label">Total Contract Amount</label>
+          <div style="position:relative;">
+            <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--gray-500);font-weight:600;">$</span>
+            <input type="text" class="form-input form-input-mono" id="sov-contract" placeholder="0.00" style="padding-left:24px;" oninput="formatCurrencyInput(this);calcSOV();stateChanged();" />
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card animate-in" style="animation-delay:60ms;">
+      <div class="card-header">
+        <span class="card-title">Misc Items</span>
+        <button class="btn btn-primary btn-sm" onclick="addMiscItem()">+ Add</button>
+      </div>
+      <div class="card-body">
+        <div style="font-size:11px;color:var(--gray-500);margin-bottom:10px;">Subtracted from contract before distributing to elevations</div>
+        <div id="sov-misc-items"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:10px;border-top:1px solid var(--gray-100);">
+          <span style="font-size:12px;font-weight:600;color:var(--gray-600);">Total Misc</span>
+          <span class="mono" style="font-weight:700;" id="sov-misc-total">$0.00</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">
+          <span style="font-size:12px;font-weight:700;color:var(--accent);">Distributable Amount</span>
+          <span class="mono" style="font-weight:700;color:var(--accent);" id="sov-distributable">$0.00</span>
+        </div>
+      </div>
+    </div>
+    <div class="card animate-in" style="animation-delay:120ms;">
+      <div class="card-header">
+        <span class="card-title">Task Split %</span>
+        <span style="font-size:11px;" id="sov-split-total-label">Total: 100%</span>
+      </div>
+      <div class="card-body">
+        <div id="sov-split-rates"></div>
+      </div>
+    </div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:20px;">
+    <div class="card animate-in" style="animation-delay:80ms;">
+      <div class="card-header">
+        <span class="card-title">Elevations / Phases</span>
+        <button class="btn btn-primary btn-sm" onclick="addSovElevation()">+ Add Elevation</button>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="phase-table">
+          <thead><tr>
+            <th style="width:36px;">#</th><th>Name</th>
+            <th style="width:130px;text-align:right;">Lineal Feet</th>
+            <th style="width:100px;text-align:right;">% of Total</th>
+            <th style="width:140px;text-align:right;">Value</th>
+            <th style="width:50px;"></th>
+          </tr></thead>
+          <tbody id="sov-elevations-body"></tbody>
+          <tfoot>
+            <tr style="background:var(--gray-50);font-weight:700;">
+              <td></td><td style="font-size:12px;text-transform:uppercase;letter-spacing:0.3px;color:var(--gray-700);padding:10px 12px;">Totals</td>
+              <td class="mono text-right" style="padding:10px 12px;" id="sov-total-lf">0</td>
+              <td class="mono text-right" style="padding:10px 12px;" id="sov-total-pct">0.0%</td>
+              <td class="mono text-right" style="padding:10px 12px;" id="sov-total-value">$0.00</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+    <div class="card animate-in" style="animation-delay:160ms;">
+      <div class="card-header"><span class="card-title">SOV Breakdown</span></div>
+      <div style="overflow-x:auto;">
+        <table class="schedule-table" id="sov-breakdown-table">
+          <thead><tr>
+            <th>Item</th><th style="text-align:right;">Scaffolding</th><th style="text-align:right;">Lath</th>
+            <th style="text-align:right;">Scratch</th><th style="text-align:right;">Brown</th>
+            <th style="text-align:right;">Finish</th><th style="text-align:right;">Total</th>
+          </tr></thead>
+          <tbody id="sov-breakdown-body"></tbody>
+        </table>
+      </div>
+      <div style="padding:12px 20px;border-top:1px solid var(--gray-100);">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:13px;font-weight:700;color:var(--gray-800);">Contract Total</span>
+          <span class="mono" style="font-size:15px;font-weight:700;color:var(--navy-800);" id="sov-grand-total">$0.00</span>
+        </div>
+        <div id="sov-balance-check" style="font-size:11px;margin-top:4px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div><!-- end page-sov -->
+<div class="modal-overlay" id="export-modal" onclick="if(event.target===this)closeExportModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Export Schedule</span>
+      <button class="modal-close" onclick="closeExportModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="export-section">
+        <div class="export-section-title">File Format</div>
+        <div class="export-option-group">
+          <div class="export-option selected" onclick="selectFormat('xlsx',this)">
+            <div class="export-option-icon">📊</div>
+            <div class="export-option-label">Excel</div>
+            <div class="export-option-sub">.xlsx</div>
+          </div>
+          <div class="export-option" onclick="selectFormat('pdf',this)">
+            <div class="export-option-icon">📄</div>
+            <div class="export-option-label">PDF</div>
+            <div class="export-option-sub">.pdf</div>
+          </div>
+        </div>
+      </div>
+      <div class="export-section">
+        <div class="export-section-title">What to Export</div>
+        <div class="export-option-group">
+          <div class="export-option selected" onclick="selectSection('duration',this)">
+            <div class="export-option-icon">⏱</div>
+            <div class="export-option-label">Duration Table</div>
+            <div class="export-option-sub">Task breakdown</div>
+          </div>
+          <div class="export-option" onclick="selectSection('calendar',this)">
+            <div class="export-option-icon">📅</div>
+            <div class="export-option-label">Calendar Schedule</div>
+            <div class="export-option-sub">With dates</div>
+          </div>
+          <div class="export-option" onclick="selectSection('both',this)">
+            <div class="export-option-icon">📋</div>
+            <div class="export-option-label">Both</div>
+            <div class="export-option-sub">Full export</div>
+          </div>
+          <div class="export-option" onclick="selectSection('sov',this)" id="sov-export-option">
+            <div class="export-option-icon">💰</div>
+            <div class="export-option-label">SOV</div>
+            <div class="export-option-sub">Schedule of Values</div>
+          </div>
+        </div>
+      </div>
+      <div class="export-section">
+        <div class="export-section-title">Columns to Include</div>
+        <div class="column-toggle-list" id="column-toggles"></div>
+      </div>
+      <div class="export-section" id="gantt-option-section" style="display:none;">
+        <div class="export-section-title">Additional Options</div>
+        <div class="gantt-toggle">
+          <input type="checkbox" id="export-gantt-toggle" />
+          <label for="export-gantt-toggle">Include Gantt chart in PDF</label>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeExportModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="executeExport()" id="export-execute-btn">⬇ Export Excel</button>
+    </div>
+  </div>
+</div>
+
 <div class="tooltip" id="tooltip"></div>
 
 <script>
-// ─── STATE ───
+// ═══════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════
 const DEFAULT_RATES = [
-  { id: 'scaffold', label: 'Scaffolding', rate: 1000, included: true, color: 'scaffold' },
-  { id: 'lath', label: 'Lath', rate: 180, included: true, color: 'lath' },
-  { id: 'scratch', label: 'Scratch', rate: 1400, included: true, color: 'scratch' },
-  { id: 'brown', label: 'Brown', rate: 700, included: true, color: 'brown' },
-  { id: 'finish', label: 'Finish', rate: 500, included: true, color: 'finish' },
+  {id:'scaffold',label:'Scaffolding',rate:1000,included:true,color:'scaffold'},
+  {id:'lath',label:'Lath',rate:180,included:true,color:'lath'},
+  {id:'scratch',label:'Scratch',rate:1400,included:true,color:'scratch'},
+  {id:'brown',label:'Brown',rate:700,included:true,color:'brown'},
+  {id:'finish',label:'Finish',rate:500,included:true,color:'finish'},
 ];
-
 let rates = JSON.parse(JSON.stringify(DEFAULT_RATES));
-let phases = [{ name: 'Phase 1', totalYards: 0 }];
-let calendarData = []; // Store calendar results for Gantt
+let phases = [{name:'Phase 1',totalYards:0}];
+let calendarData = [];
+let durationData = [];
+let exportFormat = 'xlsx';
+let exportSection = 'duration';
 
-// ─── INIT ───
-window.onload = function() {
-  renderRates();
-  renderPhases();
-  calculateSchedule();
+const DURATION_COLUMNS = [
+  {key:'phase',label:'Phase'},{key:'task',label:'Task'},
+  {key:'quantity',label:'Quantity (yards)'},{key:'rate',label:'Rate (yards/day)'},
+  {key:'duration',label:'Duration (days)'},{key:'start',label:'Start Date'},{key:'end',label:'End Date'},
+];
+const CALENDAR_COLUMNS = [
+  {key:'phase',label:'Phase'},{key:'task',label:'Task'},
+  {key:'start',label:'Start Date'},{key:'end',label:'End Date'},{key:'workDays',label:'Work Days'},
+];
+let selectedColumns = {};
+function initCols(){
+  DURATION_COLUMNS.forEach(c=>{selectedColumns['dur_'+c.key]=true;});
+  CALENDAR_COLUMNS.forEach(c=>{selectedColumns['cal_'+c.key]=true;});
+}
+initCols();
+
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
+window.onload=function(){
+  loadFromStorage();
+  renderRates();renderPhases();calculateSchedule();
+  renderSovSplits();renderSovMisc();renderSovElevations();calcSOV();
+  // Keyboard shortcuts
+  document.addEventListener('keydown',function(e){
+    if((e.ctrlKey||e.metaKey)&&e.key==='z'&&!e.shiftKey){e.preventDefault();undo();}
+    if((e.ctrlKey||e.metaKey)&&(e.key==='y'||(e.key==='z'&&e.shiftKey))){e.preventDefault();redo();}
+  });
+  // Initial undo snapshot
+  setTimeout(()=>{undoStack.push(getSnapshot());updateUndoButtons();},100);
 };
 
-// ─── RENDER RATES ───
-function renderRates() {
-  const container = document.getElementById('rate-table');
-  container.innerHTML = '';
-  rates.forEach((r, i) => {
-    const row = document.createElement('div');
-    row.className = 'rate-row';
-    row.innerHTML = `
-      <input type="checkbox" class="rate-check" ${r.included ? 'checked' : ''} 
-        onchange="rates[${i}].included=this.checked; calculateSchedule();" />
-      <span class="task-dot task-dot-${r.color}"></span>
-      <span class="rate-label">${r.label}</span>
-      <input type="number" class="rate-input" value="${r.rate}" min="0"
-        oninput="rates[${i}].rate=parseFloat(this.value)||0; calculateSchedule();" />
-      <span class="rate-unit">yd/d</span>
-    `;
-    container.appendChild(row);
+// ═══════════════════════════════════════
+// AUTO-SAVE (localStorage)
+// ═══════════════════════════════════════
+const STORAGE_KEY='kenyoncore_data';
+let saveTimeout=null;
+
+function saveToStorage(){
+  clearTimeout(saveTimeout);
+  saveTimeout=setTimeout(()=>{
+    try{
+      const data={
+        rates,phases,
+        jobName:document.getElementById('job-name')?.value||'',
+        scaffStart:document.getElementById('scaff-start-date')?.value||'',
+        lathStart:document.getElementById('lath-start-date')?.value||'',
+        sovContract:document.getElementById('sov-contract')?.value||'',
+        sovContractRaw:document.getElementById('sov-contract')?.dataset?.raw||'',
+        sovMiscItems,sovElevations,sovSplits
+      };
+      localStorage.setItem(STORAGE_KEY,JSON.stringify(data));
+      showSaveIndicator();
+    }catch(e){console.warn('Save failed:',e);}
+  },500);
+}
+
+function loadFromStorage(){
+  try{
+    const raw=localStorage.getItem(STORAGE_KEY);
+    if(!raw)return;
+    const data=JSON.parse(raw);
+    if(data.rates)rates=data.rates;
+    if(data.phases)phases=data.phases;
+    if(data.jobName){const el=document.getElementById('job-name');if(el){el.value=data.jobName;updateJobTitle();}}
+    if(data.scaffStart){const el=document.getElementById('scaff-start-date');if(el)el.value=data.scaffStart;}
+    if(data.lathStart){const el=document.getElementById('lath-start-date');if(el)el.value=data.lathStart;}
+    if(data.sovContract){const el=document.getElementById('sov-contract');if(el){el.value=data.sovContract;el.dataset.raw=data.sovContractRaw||'';}}
+    if(data.sovMiscItems)sovMiscItems=data.sovMiscItems;
+    if(data.sovElevations)sovElevations=data.sovElevations;
+    if(data.sovSplits)sovSplits=data.sovSplits;
+  }catch(e){console.warn('Load failed:',e);}
+}
+
+function showSaveIndicator(){
+  let ind=document.getElementById('save-indicator');
+  if(!ind){
+    ind=document.createElement('div');ind.id='save-indicator';
+    ind.style.cssText='position:fixed;bottom:20px;right:20px;background:var(--navy-900);color:var(--white);padding:8px 14px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;opacity:0;transition:opacity 300ms;z-index:999;pointer-events:none;';
+    document.body.appendChild(ind);
+  }
+  ind.textContent='✓ Saved';
+  ind.style.opacity='1';
+  setTimeout(()=>{ind.style.opacity='0';},1500);
+}
+
+// ═══════════════════════════════════════
+// UNDO / REDO
+// ═══════════════════════════════════════
+let undoStack=[];
+let redoStack=[];
+let snapshotTimeout=null;
+const MAX_UNDO=30;
+
+function getSnapshot(){
+  return JSON.stringify({
+    rates,phases,
+    jobName:document.getElementById('job-name')?.value||'',
+    scaffStart:document.getElementById('scaff-start-date')?.value||'',
+    lathStart:document.getElementById('lath-start-date')?.value||'',
+    sovContract:document.getElementById('sov-contract')?.value||'',
+    sovContractRaw:document.getElementById('sov-contract')?.dataset?.raw||'',
+    sovMiscItems,sovElevations,sovSplits
   });
 }
 
-// ─── RENDER PHASES ───
-function renderPhases() {
-  const tbody = document.getElementById('phases-body');
-  tbody.innerHTML = '';
-  phases.forEach((phase, i) => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td style="width:40px;"><span class="phase-drag-handle" title="Drag to reorder">⠿</span></td>
-      <td style="width:36px;"><span class="phase-number">${i + 1}</span></td>
-      <td><input class="phase-name-input" value="${escapeHtml(phase.name)}" 
-        oninput="phases[${i}].name=this.value; calculateSchedule();" /></td>
-      <td style="text-align:right;">
-        <input class="phase-yards-input" type="number" min="0" value="${phase.totalYards}"
-          oninput="phases[${i}].totalYards=parseFloat(this.value)||0; calculateSchedule();" />
-      </td>
-      <td style="text-align:center;">
-        ${phases.length > 1 ? `<button class="btn-icon btn-sm" title="Remove phase" onclick="removePhase(${i})">✕</button>` : ''}
-      </td>
-    `;
+function pushUndo(){
+  clearTimeout(snapshotTimeout);
+  snapshotTimeout=setTimeout(()=>{
+    const snap=getSnapshot();
+    if(undoStack.length===0||undoStack[undoStack.length-1]!==snap){
+      undoStack.push(snap);
+      if(undoStack.length>MAX_UNDO)undoStack.shift();
+      redoStack=[];
+      updateUndoButtons();
+    }
+  },600);
+}
+
+function restoreSnapshot(snap){
+  const data=JSON.parse(snap);
+  rates=data.rates||rates;
+  phases=data.phases||phases;
+  const jn=document.getElementById('job-name');if(jn){jn.value=data.jobName||'';updateJobTitle();}
+  const ss=document.getElementById('scaff-start-date');if(ss)ss.value=data.scaffStart||'';
+  const ls=document.getElementById('lath-start-date');if(ls)ls.value=data.lathStart||'';
+  const sc=document.getElementById('sov-contract');if(sc){sc.value=data.sovContract||'';sc.dataset.raw=data.sovContractRaw||'';}
+  sovMiscItems=data.sovMiscItems||[];
+  sovElevations=data.sovElevations||[{name:'Elevation 1',lf:0}];
+  sovSplits=data.sovSplits||sovSplits;
+  renderRates();renderPhases();calculateSchedule();
+  renderSovSplits();renderSovMisc();renderSovElevations();calcSOV();
+  saveToStorage();
+}
+
+function undo(){
+  if(undoStack.length<2)return;
+  const current=undoStack.pop();
+  redoStack.push(current);
+  const prev=undoStack[undoStack.length-1];
+  restoreSnapshot(prev);
+  updateUndoButtons();
+}
+
+function redo(){
+  if(redoStack.length===0)return;
+  const snap=redoStack.pop();
+  undoStack.push(snap);
+  restoreSnapshot(snap);
+  updateUndoButtons();
+}
+
+function updateUndoButtons(){
+  const ub=document.getElementById('undo-btn');
+  const rb=document.getElementById('redo-btn');
+  if(ub)ub.style.opacity=undoStack.length>1?'1':'0.35';
+  if(rb)rb.style.opacity=redoStack.length>0?'1':'0.35';
+}
+
+// Wrap all state changes to trigger save + undo snapshot
+function stateChanged(){
+  pushUndo();
+  saveToStorage();
+}
+
+// ═══════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════
+function renderRates(){
+  const c=document.getElementById('rate-table');c.innerHTML='';
+  rates.forEach((r,i)=>{
+    const row=document.createElement('div');row.className='rate-row';
+    row.innerHTML=`
+      <input type="checkbox" class="rate-check" ${r.included?'checked':''} onchange="rates[${i}].included=this.checked;calculateSchedule();stateChanged();" />
+      <span class="task-dot task-dot-${r.color}"></span>
+      <span class="rate-label">${r.label}</span>
+      <input type="number" class="rate-input" value="${r.rate}" min="0" oninput="rates[${i}].rate=parseFloat(this.value)||0;calculateSchedule();stateChanged();" />
+      <span class="rate-unit">yd/d</span>`;
+    c.appendChild(row);
+  });
+}
+
+function renderPhases(){
+  const tbody=document.getElementById('phases-body');tbody.innerHTML='';
+  phases.forEach((p,i)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td style="width:40px;"><span class="phase-drag-handle">⠿</span></td>
+      <td style="width:36px;"><span class="phase-number">${i+1}</span></td>
+      <td><input class="phase-name-input" value="${esc(p.name)}" oninput="phases[${i}].name=this.value;calculateSchedule();stateChanged();" /></td>
+      <td style="text-align:right;"><input class="phase-yards-input" type="number" min="0" value="${p.totalYards}" oninput="phases[${i}].totalYards=parseFloat(this.value)||0;calculateSchedule();stateChanged();" /></td>
+      <td style="text-align:center;">${phases.length>1?`<button class="btn-icon btn-sm" onclick="removePhase(${i})">✕</button>`:''}</td>`;
     tbody.appendChild(tr);
   });
   updateSummary();
 }
 
-function addPhase() {
-  phases.push({ name: `Phase ${phases.length + 1}`, totalYards: 0 });
-  renderPhases();
+function addPhase(){phases.push({name:`Phase ${phases.length+1}`,totalYards:0});renderPhases();stateChanged();}
+function removePhase(i){phases.splice(i,1);renderPhases();stateChanged();}
+function resetAll(){
+  rates=JSON.parse(JSON.stringify(DEFAULT_RATES));phases=[{name:'Phase 1',totalYards:0}];
+  document.getElementById('scaff-start-date').value='';document.getElementById('lath-start-date').value='';
+  document.getElementById('job-name').value='';updateJobTitle();
+  renderRates();renderPhases();calculateSchedule();stateChanged();
 }
-
-function removePhase(i) {
-  phases.splice(i, 1);
-  renderPhases();
+function updateJobTitle(){
+  const name=document.getElementById('job-name').value.trim();
+  document.getElementById('page-title').textContent=name?name:'Schedule Builder';
 }
+function getJobName(){return document.getElementById('job-name').value.trim()||'Schedule';}
 
-function resetAll() {
-  rates = JSON.parse(JSON.stringify(DEFAULT_RATES));
-  phases = [{ name: 'Phase 1', totalYards: 0 }];
-  document.getElementById('scaff-start-date').value = '';
-  document.getElementById('lath-start-date').value = '';
-  renderRates();
-  renderPhases();
-  calculateSchedule();
-}
+// ═══════════════════════════════════════
+// CALCULATE
+// ═══════════════════════════════════════
+function calculateSchedule(){
+  const ob=document.getElementById('output-body');ob.innerHTML='';durationData=[];
+  const rm={};rates.forEach(r=>{rm[r.id]=r;});
 
-// ─── CALCULATE SCHEDULE ───
-function calculateSchedule() {
-  const outputBody = document.getElementById('output-body');
-  outputBody.innerHTML = '';
+  phases.forEach(phase=>{
+    const qty=parseFloat(phase.totalYards)||0;if(qty<=0)return;
+    const gr=document.createElement('tr');gr.className='phase-group';
+    gr.innerHTML=`<td colspan="7">${esc(phase.name)} — ${qty.toLocaleString()} yards</td>`;
+    ob.appendChild(gr);
 
-  const rateMap = {};
-  rates.forEach(r => { rateMap[r.id] = r; });
-
-  phases.forEach((phase) => {
-    const qty = parseFloat(phase.totalYards) || 0;
-    if (qty <= 0) return;
-
-    // Phase group header
-    const groupRow = document.createElement('tr');
-    groupRow.className = 'phase-group';
-    groupRow.innerHTML = `<td colspan="7">${escapeHtml(phase.name)} — ${qty.toLocaleString()} yards</td>`;
-    outputBody.appendChild(groupRow);
-
-    const taskDefs = [
-      { id: 'scaffold', label: 'Scaffolding', cure: 0 },
-      { id: 'lath', label: 'Lath', cure: 0 },
-      { id: 'scratch', label: 'Scratch', cure: 2, cureLabel: 'Cure (after Scratch)' },
-      { id: 'brown', label: 'Brown', cure: 7, cureLabel: 'Cure (after Brown)' },
-      { id: 'finish', label: 'Finish', cure: 0 },
+    const tasks=[
+      {id:'scaffold',label:'Scaffolding',cure:0},
+      {id:'lath',label:'Lath',cure:0},
+      {id:'scratch',label:'Scratch',cure:2,cureLabel:'Cure (after Scratch)'},
+      {id:'brown',label:'Brown',cure:7,cureLabel:'Cure (after Brown)'},
+      {id:'finish',label:'Finish',cure:0},
     ];
-
-    taskDefs.forEach(task => {
-      const r = rateMap[task.id];
-      if (!r.included || r.rate <= 0) return;
-      const days = Math.ceil(qty / r.rate);
-
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td></td>
-        <td><span class="task-badge"><span class="task-dot task-dot-${r.color}"></span>${task.label}</span></td>
+    let phaseTotalDays=0;
+    tasks.forEach(t=>{
+      const r=rm[t.id];if(!r.included||r.rate<=0)return;
+      const days=Math.ceil(qty/r.rate);
+      phaseTotalDays+=days;
+      durationData.push({phase:phase.name,task:t.label,quantity:qty,rate:r.rate,duration:days,start:'',end:''});
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td></td>
+        <td><span class="task-badge"><span class="task-dot task-dot-${r.color}"></span>${t.label}</span></td>
         <td class="text-right mono">${qty.toLocaleString()}</td>
         <td class="text-right mono">${r.rate.toLocaleString()}</td>
-        <td class="text-right mono">${days} day${days !== 1 ? 's' : ''}</td>
-        <td class="text-muted">—</td>
-        <td class="text-muted">—</td>
-      `;
-      outputBody.appendChild(tr);
-
-      if (task.cure > 0) {
-        const cureTr = document.createElement('tr');
-        cureTr.innerHTML = `
-          <td></td>
-          <td><span class="task-badge"><span class="task-dot task-dot-cure"></span>${task.cureLabel}</span></td>
-          <td class="text-right mono text-muted">—</td>
-          <td class="text-right mono text-muted">—</td>
-          <td class="text-right mono">${task.cure} day${task.cure !== 1 ? 's' : ''}</td>
-          <td class="text-muted">—</td>
-          <td class="text-muted">—</td>
-        `;
-        outputBody.appendChild(cureTr);
+        <td class="text-right mono">${days} day${days!==1?'s':''}</td>
+        <td class="text-muted">—</td><td class="text-muted">—</td>`;
+      ob.appendChild(tr);
+      if(t.cure>0){
+        phaseTotalDays+=t.cure;
+        durationData.push({phase:phase.name,task:t.cureLabel,quantity:null,rate:null,duration:t.cure,start:'',end:''});
+        const cr=document.createElement('tr');
+        cr.innerHTML=`<td></td>
+          <td><span class="task-badge"><span class="task-dot task-dot-cure"></span>${t.cureLabel}</span></td>
+          <td class="text-right mono text-muted">—</td><td class="text-right mono text-muted">—</td>
+          <td class="text-right mono">${t.cure} day${t.cure!==1?'s':''}</td>
+          <td class="text-muted">—</td><td class="text-muted">—</td>`;
+        ob.appendChild(cr);
       }
     });
+    // Total duration row for this phase
+    if(phaseTotalDays>0){
+      durationData.push({phase:phase.name,task:'TOTAL DURATION',quantity:null,rate:null,duration:phaseTotalDays,start:'',end:'',isTotal:true});
+      const tot=document.createElement('tr');tot.className='phase-total';
+      tot.innerHTML=`<td></td>
+        <td style="font-weight:700;">Total Duration</td>
+        <td></td><td></td>
+        <td class="text-right mono" style="font-weight:700;font-size:13px;">${phaseTotalDays} day${phaseTotalDays!==1?'s':''}</td>
+        <td></td><td></td>`;
+      ob.appendChild(tot);
+    }
   });
-
-  updateSummary();
-  buildCalendarSchedule();
+  updateSummary();buildCalendarSchedule();
 }
 
-// ─── SUMMARY ───
-function updateSummary() {
-  document.getElementById('stat-phases').textContent = phases.length;
-  const totalYards = phases.reduce((sum, p) => sum + (parseFloat(p.totalYards) || 0), 0);
-  document.getElementById('stat-yards').textContent = totalYards.toLocaleString();
-
-  // Calendar days computed after calendar build
-  const badge = document.getElementById('status-badge');
-  const hasYards = phases.some(p => p.totalYards > 0);
-  const hasDate = document.getElementById('scaff-start-date').value && document.getElementById('lath-start-date').value;
-  if (hasYards && hasDate) {
-    badge.textContent = 'Active';
-    badge.className = 'badge badge-active';
-  } else {
-    badge.textContent = 'Draft';
-    badge.className = 'badge badge-draft';
-  }
+function updateSummary(){
+  document.getElementById('stat-phases').textContent=phases.length;
+  const ty=phases.reduce((s,p)=>s+(parseFloat(p.totalYards)||0),0);
+  document.getElementById('stat-yards').textContent=ty.toLocaleString();
+  const b=document.getElementById('status-badge');
+  const hy=phases.some(p=>p.totalYards>0);
+  const hd=document.getElementById('scaff-start-date').value&&document.getElementById('lath-start-date').value;
+  if(hy&&hd){b.textContent='Active';b.className='badge badge-active';}
+  else{b.textContent='Draft';b.className='badge badge-draft';}
 }
 
-// ─── DATE UTILITIES ───
-function nextWorkday(date) {
-  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() + 1);
-  return d;
-}
+// ═══════════════════════════════════════
+// DATE UTILS
+// ═══════════════════════════════════════
+function nextWorkday(d){const r=new Date(d.getFullYear(),d.getMonth(),d.getDate());while(r.getDay()===0||r.getDay()===6)r.setDate(r.getDate()+1);return r;}
+function addWorkDays(d,n){let r=new Date(d.getFullYear(),d.getMonth(),d.getDate()),c=0;while(c<n){r.setDate(r.getDate()+1);if(r.getDay()!==0&&r.getDay()!==6)c++;}return r;}
+function addCalDays(d,n){return new Date(d.getFullYear(),d.getMonth(),d.getDate()+n);}
+function fmtDate(d){if(!d)return'—';const m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return`${m[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;}
+function fmtDateShort(d){if(!d)return'';return`${d.getMonth()+1}/${d.getDate()}`;}
+function isoDate(d){if(!d)return'';return d.toISOString().split('T')[0];}
+function dateDiff(a,b){return Math.round((b-a)/(1000*60*60*24));}
 
-function addWorkDays(date, days) {
-  let d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  let count = 0;
-  while (count < days) {
-    d.setDate(d.getDate() + 1);
-    if (d.getDay() !== 0 && d.getDay() !== 6) count++;
-  }
-  return d;
-}
+// ═══════════════════════════════════════
+// CALENDAR SCHEDULE
+// ═══════════════════════════════════════
+function buildCalendarSchedule(){
+  const cb=document.getElementById('calendar-body');cb.innerHTML='';calendarData=[];
+  const si=document.getElementById('scaff-start-date').value;
+  const li=document.getElementById('lath-start-date').value;
+  if(!si||!li){document.getElementById('stat-days').textContent='—';durationData.forEach(d=>{d.start='';d.end='';});buildGantt();return;}
 
-function addCalendarDays(date, days) {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
-}
+  const[sY,sM,sD]=si.split('-').map(Number);
+  const[lY,lM,lD]=li.split('-').map(Number);
+  const gss=nextWorkday(new Date(sY,sM-1,sD));
+  const gls=nextWorkday(new Date(lY,lM-1,lD));
+  const rm={};rates.forEach(r=>{rm[r.id]=r;});
+  let sc=new Date(gss.getTime()),lc=new Date(gls.getTime());
+  let gMin=null,gMax=null,di=0;
 
-function fmtDate(d) {
-  if (!d) return '—';
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  return `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
-}
+  function track(s,e){if(s&&(!gMin||s<gMin))gMin=new Date(s);if(e&&(!gMax||e>gMax))gMax=new Date(e);}
+  function matchDur(tn,s,e){for(let i=di;i<durationData.length;i++){if(durationData[i].isTotal)continue;if(durationData[i].task===tn&&!durationData[i].start){durationData[i].start=fmtDate(s);durationData[i].end=fmtDate(e);di=i+1;break;}}}
 
-function fmtDateShort(d) {
-  if (!d) return '';
-  return `${d.getMonth()+1}/${d.getDate()}`;
-}
-
-function isoDate(d) {
-  if (!d) return '';
-  return d.toISOString().split('T')[0];
-}
-
-function dateDiffDays(a, b) {
-  return Math.round((b - a) / (1000*60*60*24));
-}
-
-// ─── BUILD CALENDAR SCHEDULE ───
-function buildCalendarSchedule() {
-  const calendarBody = document.getElementById('calendar-body');
-  calendarBody.innerHTML = '';
-  calendarData = [];
-
-  const scaffInput = document.getElementById('scaff-start-date').value;
-  const lathInput = document.getElementById('lath-start-date').value;
-
-  if (!scaffInput || !lathInput) {
-    document.getElementById('stat-days').textContent = '—';
-    buildGantt();
-    return;
+  function addCR(pn,tn,s,e,wd,tt){
+    calendarData.push({phase:pn,task:tn,start:s,end:e,workDays:wd,taskType:tt});track(s,e);
+    const ip=cb.children.length===0||cb.lastElementChild?.dataset.phase!==pn;
+    if(ip){const g=document.createElement('tr');g.className='phase-group';g.dataset.phase=pn;g.innerHTML=`<td colspan="5">${esc(pn)}</td>`;cb.appendChild(g);}
+    const tr=document.createElement('tr');tr.dataset.phase=pn;
+    tr.innerHTML=`<td></td><td><span class="task-badge"><span class="task-dot task-dot-${tt}"></span>${tn}</span></td><td class="mono">${fmtDate(s)}</td><td class="mono">${fmtDate(e)}</td><td class="text-right mono">${wd}</td>`;
+    cb.appendChild(tr);
   }
 
-  const [scY, scM, scD] = scaffInput.split('-').map(Number);
-  const [laY, laM, laD] = lathInput.split('-').map(Number);
-  const globalScaffStart = nextWorkday(new Date(scY, scM - 1, scD));
-  const globalLathStart = nextWorkday(new Date(laY, laM - 1, laD));
+  phases.forEach(phase=>{
+    const qty=parseFloat(phase.totalYards)||0;if(qty<=0)return;
+    const rS=rm.scaffold,rL=rm.lath,rSc=rm.scratch,rB=rm.brown,rF=rm.finish;
+    const dS=rS.rate>0?Math.ceil(qty/rS.rate):0;
+    const dL=rL.rate>0?Math.ceil(qty/rL.rate):0;
+    const dSc=rSc.rate>0?Math.ceil(qty/rSc.rate):0;
+    const dB=rB.rate>0?Math.ceil(qty/rB.rate):0;
+    const dF=rF.rate>0?Math.ceil(qty/rF.rate):0;
 
-  const rateMap = {};
-  rates.forEach(r => { rateMap[r.id] = r; });
+    let ss=null,se=null;
+    if(dS>0){const c=new Date(Math.max(sc.getTime(),gss.getTime()));ss=nextWorkday(c);se=addWorkDays(ss,dS-1);sc=addWorkDays(ss,dS);if(rS.included){addCR(phase.name,'Scaffolding',ss,se,dS,'scaffold');matchDur('Scaffolding',ss,se);}}
 
-  let scaffCursor = new Date(globalScaffStart.getTime());
-  let lathCursor = new Date(globalLathStart.getTime());
+    let ls=null,le=null;
+    if(dL>0){const c=new Date(Math.max(lc.getTime(),gls.getTime()));ls=nextWorkday(c);le=addWorkDays(ls,dL-1);lc=addWorkDays(ls,dL);if(rL.included){addCR(phase.name,'Lath',ls,le,dL,'lath');matchDur('Lath',ls,le);}}
 
-  let globalMin = null, globalMax = null;
+    let pe=le||ls||se||gls;
+    let stg=pe,scE=null,c1E=null;
 
-  function trackDates(start, end) {
-    if (start && (!globalMin || start < globalMin)) globalMin = new Date(start);
-    if (end && (!globalMax || end > globalMax)) globalMax = new Date(end);
-  }
-
-  phases.forEach((phase) => {
-    const qty = parseFloat(phase.totalYards) || 0;
-    if (qty <= 0) return;
-
-    const rScaff = rateMap.scaffold;
-    const rLath = rateMap.lath;
-    const rScratch = rateMap.scratch;
-    const rBrown = rateMap.brown;
-    const rFinish = rateMap.finish;
-
-    const daysSc = rScaff.rate > 0 ? Math.ceil(qty / rScaff.rate) : 0;
-    const daysLath = rLath.rate > 0 ? Math.ceil(qty / rLath.rate) : 0;
-    const daysScratch = rScratch.rate > 0 ? Math.ceil(qty / rScratch.rate) : 0;
-    const daysBrown = rBrown.rate > 0 ? Math.ceil(qty / rBrown.rate) : 0;
-    const daysFinish = rFinish.rate > 0 ? Math.ceil(qty / rFinish.rate) : 0;
-
-    // Scaffolding
-    let scaffStart = null, scaffEnd = null;
-    if (daysSc > 0) {
-      const startCandidate = new Date(Math.max(scaffCursor.getTime(), globalScaffStart.getTime()));
-      scaffStart = nextWorkday(startCandidate);
-      scaffEnd = addWorkDays(scaffStart, daysSc - 1);
-      scaffCursor = addWorkDays(scaffStart, daysSc);
-      if (rScaff.included) {
-        addCalRow(phase.name, 'Scaffolding', scaffStart, scaffEnd, daysSc, 'scaffold');
-      }
+    if(rSc.included&&dSc>0){
+      const scS=nextWorkday(addCalDays(stg,1));scE=addWorkDays(scS,dSc-1);
+      addCR(phase.name,'Scratch',scS,scE,dSc,'scratch');matchDur('Scratch',scS,scE);
+      const c1S=addCalDays(scS,1);c1E=addCalDays(c1S,1);
+      addCR(phase.name,'Cure (after Scratch)',c1S,c1E,2,'cure');matchDur('Cure (after Scratch)',c1S,c1E);
+      stg=c1E;
     }
 
-    // Lath
-    let lathStart = null, lathEnd = null;
-    if (daysLath > 0) {
-      const startCandidate = new Date(Math.max(lathCursor.getTime(), globalLathStart.getTime()));
-      lathStart = nextWorkday(startCandidate);
-      lathEnd = addWorkDays(lathStart, daysLath - 1);
-      lathCursor = addWorkDays(lathStart, daysLath);
-      if (rLath.included) {
-        addCalRow(phase.name, 'Lath', lathStart, lathEnd, daysLath, 'lath');
-      }
+    let bE=null,c2E=null;
+    if(rB.included&&dB>0){
+      const bS=nextWorkday(addCalDays(stg,1));bE=addWorkDays(bS,dB-1);
+      addCR(phase.name,'Brown',bS,bE,dB,'brown');matchDur('Brown',bS,bE);
+      const c2S=addCalDays(bS,1);c2E=addCalDays(c2S,6);
+      addCR(phase.name,'Cure (after Brown)',c2S,c2E,7,'cure');matchDur('Cure (after Brown)',c2S,c2E);
+      stg=c2E;
     }
 
-    let prepEnd = lathEnd || lathStart || scaffEnd || globalLathStart;
-
-    // Scratch + Cure
-    let stageCursor = prepEnd;
-    let scratchEnd = null, cure1End = null;
-    if (rScratch.included && daysScratch > 0) {
-      const scratchStart = nextWorkday(addCalendarDays(stageCursor, 1));
-      scratchEnd = addWorkDays(scratchStart, daysScratch - 1);
-      addCalRow(phase.name, 'Scratch', scratchStart, scratchEnd, daysScratch, 'scratch');
-
-      const cure1Start = addCalendarDays(scratchStart, 1);
-      cure1End = addCalendarDays(cure1Start, 1);
-      addCalRow(phase.name, 'Cure (after Scratch)', cure1Start, cure1End, 2, 'cure');
-      stageCursor = cure1End;
-    }
-
-    // Brown + Cure
-    let brownEnd = null, cure2End = null;
-    if (rBrown.included && daysBrown > 0) {
-      const brownStart = nextWorkday(addCalendarDays(stageCursor, 1));
-      brownEnd = addWorkDays(brownStart, daysBrown - 1);
-      addCalRow(phase.name, 'Brown', brownStart, brownEnd, daysBrown, 'brown');
-
-      const cure2Start = addCalendarDays(brownStart, 1);
-      cure2End = addCalendarDays(cure2Start, 6);
-      addCalRow(phase.name, 'Cure (after Brown)', cure2Start, cure2End, 7, 'cure');
-      stageCursor = cure2End;
-    }
-
-    // Finish
-    if (rFinish.included && daysFinish > 0) {
-      let finishBase;
-      if (rBrown.included && daysBrown > 0 && cure2End) finishBase = cure2End;
-      else if (rScratch.included && daysScratch > 0 && cure1End) finishBase = cure1End;
-      else finishBase = prepEnd || stageCursor;
-
-      const finishStart = nextWorkday(addCalendarDays(finishBase, 1));
-      const finishEnd = addWorkDays(finishStart, daysFinish - 1);
-      addCalRow(phase.name, 'Finish', finishStart, finishEnd, daysFinish, 'finish');
+    if(rF.included&&dF>0){
+      let fb;
+      if(rB.included&&dB>0&&c2E)fb=c2E;else if(rSc.included&&dSc>0&&c1E)fb=c1E;else fb=pe||stg;
+      const fS=nextWorkday(addCalDays(fb,1));const fE=addWorkDays(fS,dF-1);
+      addCR(phase.name,'Finish',fS,fE,dF,'finish');matchDur('Finish',fS,fE);
     }
   });
 
-  function addCalRow(phaseName, taskName, start, end, workDays, taskType) {
-    calendarData.push({ phase: phaseName, task: taskName, start, end, workDays, taskType });
-    trackDates(start, end);
-
-    const tr = document.createElement('tr');
-    const isPhaseStart = calendarBody.children.length === 0 ||
-      (calendarBody.lastElementChild && !calendarBody.lastElementChild.dataset.phase) ||
-      calendarBody.lastElementChild?.dataset.phase !== phaseName;
-    
-    if (isPhaseStart) {
-      const groupRow = document.createElement('tr');
-      groupRow.className = 'phase-group';
-      groupRow.dataset.phase = phaseName;
-      groupRow.innerHTML = `<td colspan="5">${escapeHtml(phaseName)}</td>`;
-      calendarBody.appendChild(groupRow);
-    }
-
-    tr.dataset.phase = phaseName;
-    tr.innerHTML = `
-      <td></td>
-      <td><span class="task-badge"><span class="task-dot task-dot-${taskType}"></span>${taskName}</span></td>
-      <td class="mono">${fmtDate(start)}</td>
-      <td class="mono">${fmtDate(end)}</td>
-      <td class="text-right mono">${workDays}</td>
-    `;
-    calendarBody.appendChild(tr);
-  }
-
-  // Update also the table view with start/end dates
   updateTableDates();
-
-  // Calendar days
-  if (globalMin && globalMax) {
-    const totalCalDays = dateDiffDays(globalMin, globalMax) + 1;
-    document.getElementById('stat-days').textContent = totalCalDays;
-  }
-
+  if(gMin&&gMax)document.getElementById('stat-days').textContent=dateDiff(gMin,gMax)+1;
   buildGantt();
 }
 
-// ─── UPDATE TABLE VIEW WITH DATES ───
-function updateTableDates() {
-  const rows = document.getElementById('output-body').querySelectorAll('tr:not(.phase-group)');
-  let calIdx = 0;
-  rows.forEach(tr => {
-    const cells = tr.querySelectorAll('td');
-    if (cells.length >= 7 && calIdx < calendarData.length) {
-      const cd = calendarData[calIdx];
-      // Match task name
-      const taskText = cells[1]?.textContent?.trim();
-      if (taskText && cd.task === taskText) {
-        cells[5].innerHTML = `<span class="mono">${fmtDate(cd.start)}</span>`;
-        cells[6].innerHTML = `<span class="mono">${fmtDate(cd.end)}</span>`;
-        calIdx++;
-      }
-    }
+function updateTableDates(){
+  const rows=document.getElementById('output-body').querySelectorAll('tr:not(.phase-group):not(.phase-total)');
+  let i=0;rows.forEach(tr=>{
+    while(i<durationData.length&&durationData[i].isTotal)i++;
+    const c=tr.querySelectorAll('td');if(c.length>=7&&i<durationData.length){c[5].innerHTML=`<span class="mono">${durationData[i].start||'—'}</span>`;c[6].innerHTML=`<span class="mono">${durationData[i].end||'—'}</span>`;i++;}
   });
 }
 
-// ─── GANTT CHART ───
-function buildGantt() {
-  const container = document.getElementById('gantt-container');
-  
-  if (calendarData.length === 0) {
-    container.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-state-icon">📊</div>
-        <div class="empty-state-text">Set start dates and phase yards to view Gantt chart</div>
-        <div class="empty-state-sub">Enter scaffolding & lath start dates in Schedule Settings</div>
-      </div>`;
+// ═══════════════════════════════════════
+// GANTT
+// ═══════════════════════════════════════
+function buildGantt(){
+  const c=document.getElementById('gantt-container');
+  if(!calendarData.length){c.innerHTML=`<div class="empty-state"><div class="empty-state-icon">📊</div><div class="empty-state-text">Set start dates and phase yards to view Gantt chart</div><div class="empty-state-sub">Enter scaffolding & lath start dates in Schedule Settings</div></div>`;return;}
+  let mn=null,mx=null;calendarData.forEach(d=>{if(d.start&&(!mn||d.start<mn))mn=new Date(d.start);if(d.end&&(!mx||d.end>mx))mx=new Date(d.end);});
+  if(!mn||!mx)return;
+  mn=addCalDays(mn,-2);mx=addCalDays(mx,3);
+  const td=dateDiff(mn,mx)+1,dw=Math.max(18,Math.min(36,900/td)),tw=td*dw;
+  let h='';
+  h+=`<div class="gantt-header-row" style="min-width:${180+tw}px;">`;
+  for(let i=0;i<td;i++){const d=addCalDays(mn,i);const sl=d.getDate()===1||(d.getDay()===1&&dw>=24);h+=`<div class="gantt-date-label" style="width:${dw}px;min-width:${dw}px;">${sl?fmtDateShort(d):''}</div>`;}
+  h+='</div>';
+  let cp='';
+  calendarData.forEach(item=>{
+    if(item.phase!==cp){cp=item.phase;h+=`<div class="gantt-phase-header" style="min-width:${180+tw}px;">${esc(item.phase)}</div>`;}
+    const so=dateDiff(mn,item.start),eo=dateDiff(mn,item.end);
+    const bl=so*dw,bw=Math.max(dw*0.5,(eo-so+1)*dw-2);
+    h+=`<div class="gantt-row" style="min-width:${180+tw}px;"><div class="gantt-label">${item.task}</div><div class="gantt-track" style="width:${tw}px;min-width:${tw}px;"><div class="gantt-bar gantt-bar-${item.taskType}" style="left:${bl}px;width:${bw}px;" onmouseenter="showTT(event,'${esc(item.task)}: ${fmtDate(item.start)} → ${fmtDate(item.end)} (${item.workDays}d)')" onmouseleave="hideTT()">${item.workDays}d</div></div></div>`;
+  });
+  c.innerHTML=h;
+}
+function showTT(e,t){const tip=document.getElementById('tooltip');tip.textContent=t;tip.style.display='block';tip.style.left=e.pageX+12+'px';tip.style.top=e.pageY-10+'px';}
+function hideTT(){document.getElementById('tooltip').style.display='none';}
+function switchView(v,b){document.querySelectorAll('.view-tab').forEach(t=>t.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));document.getElementById('view-'+v).classList.add('active');}
+
+// ═══════════════════════════════════════
+// EXPORT MODAL
+// ═══════════════════════════════════════
+function openExportModal(){document.getElementById('export-modal').classList.add('open');exportFormat='xlsx';exportSection='duration';renderExportModal();}
+function closeExportModal(){document.getElementById('export-modal').classList.remove('open');}
+function selectFormat(f,el){exportFormat=f;el.parentElement.querySelectorAll('.export-option').forEach(o=>o.classList.remove('selected'));el.classList.add('selected');renderExportModal();}
+function selectSection(s,el){exportSection=s;el.parentElement.querySelectorAll('.export-option').forEach(o=>o.classList.remove('selected'));el.classList.add('selected');renderExportModal();}
+
+function renderExportModal(){
+  document.getElementById('export-execute-btn').textContent=exportFormat==='xlsx'?'⬇ Export Excel':'⬇ Export PDF';
+  document.getElementById('gantt-option-section').style.display=exportFormat==='pdf'?'block':'none';
+  const ct=document.getElementById('column-toggles');ct.innerHTML='';
+  let groups=[];
+  if(exportSection==='duration'||exportSection==='both')groups.push({header:'Duration Table',cols:DURATION_COLUMNS,prefix:'dur_'});
+  if(exportSection==='calendar'||exportSection==='both')groups.push({header:'Calendar Schedule',cols:CALENDAR_COLUMNS,prefix:'cal_'});
+  if(exportSection==='sov'){
+    ct.innerHTML='<div style="font-size:12px;color:var(--gray-500);padding:8px 0;">SOV exports all columns (Item, Scaffolding, Lath, Scratch, Brown, Finish, Total)</div>';
     return;
   }
-
-  let minDate = null, maxDate = null;
-  calendarData.forEach(d => {
-    if (d.start && (!minDate || d.start < minDate)) minDate = new Date(d.start);
-    if (d.end && (!maxDate || d.end > maxDate)) maxDate = new Date(d.end);
-  });
-
-  if (!minDate || !maxDate) return;
-
-  // Add 2-day padding
-  minDate = addCalendarDays(minDate, -2);
-  maxDate = addCalendarDays(maxDate, 3);
-  const totalDays = dateDiffDays(minDate, maxDate) + 1;
-  const dayWidth = Math.max(18, Math.min(36, 900 / totalDays));
-  const trackWidth = totalDays * dayWidth;
-
-  let html = '';
-
-  // Date header
-  html += `<div class="gantt-header-row" style="min-width: ${180 + trackWidth}px;">`;
-  for (let i = 0; i < totalDays; i++) {
-    const d = addCalendarDays(minDate, i);
-    const isFirstOfMonth = d.getDate() === 1;
-    const isMonday = d.getDay() === 1;
-    const showLabel = isFirstOfMonth || (isMonday && dayWidth >= 24);
-    html += `<div class="gantt-date-label" style="width:${dayWidth}px; min-width:${dayWidth}px;">
-      ${showLabel ? fmtDateShort(d) : ''}
-    </div>`;
-  }
-  html += '</div>';
-
-  // Rows grouped by phase
-  let currentPhase = '';
-  calendarData.forEach((item, idx) => {
-    if (item.phase !== currentPhase) {
-      currentPhase = item.phase;
-      html += `<div class="gantt-phase-header" style="min-width: ${180 + trackWidth}px;">${escapeHtml(item.phase)}</div>`;
-    }
-
-    const startOff = dateDiffDays(minDate, item.start);
-    const endOff = dateDiffDays(minDate, item.end);
-    const barLeft = startOff * dayWidth;
-    const barWidth = Math.max(dayWidth * 0.5, (endOff - startOff + 1) * dayWidth - 2);
-
-    html += `<div class="gantt-row" style="min-width: ${180 + trackWidth}px;">
-      <div class="gantt-label">${item.task}</div>
-      <div class="gantt-track" style="width:${trackWidth}px; min-width:${trackWidth}px;">
-        <div class="gantt-bar gantt-bar-${item.taskType}" 
-          style="left:${barLeft}px; width:${barWidth}px;"
-          onmouseenter="showTooltip(event, '${escapeHtml(item.task)}: ${fmtDate(item.start)} → ${fmtDate(item.end)} (${item.workDays}d)')"
-          onmouseleave="hideTooltip()"
-          >${item.workDays}d</div>
-      </div>
-    </div>`;
-  });
-
-  container.innerHTML = html;
-}
-
-// ─── TOOLTIP ───
-function showTooltip(e, text) {
-  const tip = document.getElementById('tooltip');
-  tip.textContent = text;
-  tip.style.display = 'block';
-  tip.style.left = e.pageX + 12 + 'px';
-  tip.style.top = e.pageY - 10 + 'px';
-}
-function hideTooltip() {
-  document.getElementById('tooltip').style.display = 'none';
-}
-
-// ─── VIEW TABS ───
-function switchView(view, btn) {
-  document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
-  btn.classList.add('active');
-  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-  document.getElementById('view-' + view).classList.add('active');
-}
-
-// ─── EXPORT CSV ───
-function exportCalendarSchedule() {
-  if (calendarData.length === 0) return;
-
-  const scheduleMap = {};
-  const phaseOrder = [];
-  const taskOrder = [];
-
-  calendarData.forEach(d => {
-    if (!scheduleMap[d.phase]) { scheduleMap[d.phase] = {}; phaseOrder.push(d.phase); }
-    if (!taskOrder.includes(d.task)) taskOrder.push(d.task);
-    scheduleMap[d.phase][d.task] = { start: isoDate(d.start), end: isoDate(d.end) };
-  });
-
-  const defaultTaskOrder = ['Scaffolding','Lath','Scratch','Cure (after Scratch)','Brown','Cure (after Brown)','Finish'];
-  const finalTaskOrder = defaultTaskOrder.concat(taskOrder.filter(t => !defaultTaskOrder.includes(t)));
-
-  const header = ['Phase'];
-  finalTaskOrder.forEach(task => { header.push(`${task} Start`); header.push(`${task} End`); });
-  const data = [header];
-
-  phases.forEach(p => {
-    if (!scheduleMap[p.name]) return;
-    const row = [p.name];
-    finalTaskOrder.forEach(task => {
-      const entry = scheduleMap[p.name]?.[task];
-      row.push(entry ? entry.start : '');
-      row.push(entry ? entry.end : '');
+  groups.forEach(g=>{
+    if(exportSection==='both'){const gl=document.createElement('div');gl.style.cssText='font-size:11px;font-weight:700;color:var(--gray-500);margin:10px 0 6px;text-transform:uppercase;letter-spacing:0.4px';gl.textContent=g.header;ct.appendChild(gl);}
+    g.cols.forEach(col=>{
+      const k=g.prefix+col.key;
+      const d=document.createElement('div');d.className='column-toggle';
+      d.innerHTML=`<input type="checkbox" id="col-${k}" ${selectedColumns[k]?'checked':''} onchange="selectedColumns['${k}']=this.checked;" /><label for="col-${k}">${col.label}</label>${exportSection==='both'?`<span class="col-preview">${g.prefix==='dur_'?'Duration':'Calendar'}</span>`:''}`;
+      ct.appendChild(d);
     });
-    data.push(row);
   });
-
-  const csvContent = data.map(row => row.map(item => '"' + String(item).replace(/"/g, '""') + '"').join(',')).join('\n');
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = 'schedule.csv';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
 }
 
-// ─── UTILITIES ───
-function escapeHtml(str) {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
+function executeExport(){if(exportFormat==='xlsx')exportExcel();else exportPDF();closeExportModal();}
+
+// ═══════════════════════════════════════
+// EXCEL EXPORT
+// ═══════════════════════════════════════
+function exportExcel(){
+  const wb=XLSX.utils.book_new();
+  const jobName=getJobName();
+  if(exportSection==='duration'||exportSection==='both'){
+    const cols=DURATION_COLUMNS.filter(c=>selectedColumns['dur_'+c.key]);
+    const hdr=cols.map(c=>c.label);
+    const rows=durationData.map(d=>cols.map(c=>{
+      switch(c.key){case'phase':return d.phase;case'task':return d.task;case'quantity':return d.quantity!==null?d.quantity:'';case'rate':return d.rate!==null?d.rate:'';case'duration':return d.duration;case'start':return d.start||'';case'end':return d.end||'';default:return'';}
+    }));
+    const titleRow=[jobName];for(let i=1;i<hdr.length;i++)titleRow.push('');
+    const dateRow=['Exported: '+new Date().toLocaleDateString()];for(let i=1;i<hdr.length;i++)dateRow.push('');
+    const wsData=[titleRow,dateRow,[],hdr,...rows];
+    const ws=XLSX.utils.aoa_to_sheet(wsData);
+    ws['!cols']=cols.map(c=>({wch:['phase','task'].includes(c.key)?24:['start','end'].includes(c.key)?18:16}));
+    if(hdr.length>1)ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:hdr.length-1}},{s:{r:1,c:0},e:{r:1,c:hdr.length-1}}];
+    XLSX.utils.book_append_sheet(wb,ws,'Duration Schedule');
+  }
+  if(exportSection==='calendar'||exportSection==='both'){
+    const cols=CALENDAR_COLUMNS.filter(c=>selectedColumns['cal_'+c.key]);
+    const hdr=cols.map(c=>c.label);
+    const rows=calendarData.map(d=>cols.map(c=>{
+      switch(c.key){case'phase':return d.phase;case'task':return d.task;case'start':return fmtDate(d.start);case'end':return fmtDate(d.end);case'workDays':return d.workDays;default:return'';}
+    }));
+    const titleRow=[jobName];for(let i=1;i<hdr.length;i++)titleRow.push('');
+    const dateRow=['Exported: '+new Date().toLocaleDateString()];for(let i=1;i<hdr.length;i++)dateRow.push('');
+    const wsData=[titleRow,dateRow,[],hdr,...rows];
+    const ws=XLSX.utils.aoa_to_sheet(wsData);
+    ws['!cols']=cols.map(c=>({wch:['phase','task'].includes(c.key)?24:['start','end'].includes(c.key)?18:12}));
+    if(hdr.length>1)ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:hdr.length-1}},{s:{r:1,c:0},e:{r:1,c:hdr.length-1}}];
+    XLSX.utils.book_append_sheet(wb,ws,'Calendar Schedule');
+  }
+  if(exportSection==='sov'||exportSection==='both'){
+    buildSovExcelSheet(wb,jobName);
+  }
+  XLSX.writeFile(wb,jobName.replace(/[^a-zA-Z0-9 ]/g,'').replace(/ +/g,'_')+'_schedule.xlsx');
+}
+
+function buildSovExcelSheet(wb,jobName){
+  const contract=getContractAmount();
+  const miscTotal=sovMiscItems.reduce((s,m)=>s+m.value,0);
+  const distributable=contract-miscTotal;
+  const totalLF=sovElevations.reduce((s,e)=>s+(parseFloat(e.lf)||0),0);
+  const hdr=['Item','Scaffolding','Lath','Scratch','Brown','Finish','Total'];
+  const rows=[];
+  sovElevations.forEach(e=>{
+    const lf=parseFloat(e.lf)||0;const pct=totalLF>0?(lf/totalLF):0;const ev=distributable*pct;
+    if(ev<=0)return;
+    const cells=sovSplits.map(sp=>({raw:ev*(sp.pct/100)}));
+    const rounded=cells.map(c=>({val:Math.floor(c.raw),rem:c.raw-Math.floor(c.raw)}));
+    const target=Math.round(ev);
+    let diff=target-rounded.reduce((s,c)=>s+c.val,0);
+    const sorted=[...rounded.map((r,i)=>({...r,i}))].sort((a,b)=>b.rem-a.rem);
+    for(let j=0;j<diff&&j<sorted.length;j++){rounded[sorted[j].i].val+=1;}
+    const r=[e.name];let rt=0;
+    rounded.forEach(c=>{r.push(c.val);rt+=c.val;});
+    r.push(rt);rows.push(r);
+  });
+  sovMiscItems.forEach(m=>{if(m.value<=0&&!m.name)return;rows.push([m.name||'Misc Item','','','','','',Math.round(m.value)]);});
+  const totRow=['TOTAL'];
+  for(let c=1;c<=6;c++){let sum=0;rows.forEach(r=>{if(typeof r[c]==='number')sum+=r[c];});totRow.push(sum);}
+  rows.push(totRow);
+
+  const titleRow=[jobName+' — Schedule of Values'];for(let i=1;i<hdr.length;i++)titleRow.push('');
+  const contractRow=['Contract: '+fmtWhole(contract)+'  |  Misc: '+fmtWhole(miscTotal)+'  |  Distributable: '+fmtWhole(distributable)];for(let i=1;i<hdr.length;i++)contractRow.push('');
+  const wsData=[titleRow,contractRow,[],hdr,...rows];
+  const ws=XLSX.utils.aoa_to_sheet(wsData);
+  ws['!cols']=[{wch:24},{wch:16},{wch:16},{wch:16},{wch:16},{wch:16},{wch:18}];
+  if(hdr.length>1)ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:hdr.length-1}},{s:{r:1,c:0},e:{r:1,c:hdr.length-1}}];
+  for(let r=4;r<wsData.length;r++){for(let c=1;c<7;c++){const ref=XLSX.utils.encode_cell({r,c});if(ws[ref]&&typeof ws[ref].v==='number')ws[ref].z='$#,##0';}}
+  XLSX.utils.book_append_sheet(wb,ws,'Schedule of Values');
+}
+
+// ═══════════════════════════════════════
+// PDF EXPORT
+// ═══════════════════════════════════════
+async function exportPDF(){
+  const{jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+  const pw=doc.internal.pageSize.getWidth();
+  const or=[27,58,107],nv=[27,42,74],gr=[85,91,110];
+  const jobName=getJobName();
+
+  doc.setFillColor(...nv);doc.rect(0,0,pw,14,'F');
+  doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(255,255,255);
+  doc.text(jobName,10,9.5);
+  doc.setFontSize(8);doc.setTextColor(180,189,208);
+  doc.text('Exported: '+new Date().toLocaleDateString(),pw-10,9.5,{align:'right'});
+  let y=22;
+
+  if(exportSection==='duration'||exportSection==='both'){
+    doc.setFont('helvetica','bold');doc.setFontSize(13);doc.setTextColor(...nv);
+    doc.text('Duration Schedule',10,y);y+=4;
+    const cols=DURATION_COLUMNS.filter(c=>selectedColumns['dur_'+c.key]);
+    const hdr=cols.map(c=>c.label);
+    const rows=durationData.map(d=>cols.map(c=>{
+      switch(c.key){case'phase':return d.phase;case'task':return d.task;case'quantity':return d.quantity!==null?d.quantity.toLocaleString():'—';case'rate':return d.rate!==null?d.rate.toLocaleString():'—';case'duration':return d.duration+' days';case'start':return d.start||'—';case'end':return d.end||'—';default:return'';}
+    }));
+    const cs={};cols.forEach((c,i)=>{if(['quantity','rate','duration','workDays'].includes(c.key))cs[i]={halign:'right'};});
+    doc.autoTable({startY:y,head:[hdr],body:rows,theme:'grid',styles:{font:'helvetica',fontSize:8,cellPadding:3},headStyles:{fillColor:or,textColor:[255,255,255],fontStyle:'bold',fontSize:8},alternateRowStyles:{fillColor:[245,246,250]},columnStyles:cs,margin:{left:10,right:10}});
+    y=doc.lastAutoTable.finalY+10;
+  }
+
+  if(exportSection==='calendar'||exportSection==='both'){
+    if(y>160){doc.addPage();y=15;}
+    doc.setFont('helvetica','bold');doc.setFontSize(13);doc.setTextColor(...nv);
+    doc.text('Calendar Schedule',10,y);y+=4;
+    const cols=CALENDAR_COLUMNS.filter(c=>selectedColumns['cal_'+c.key]);
+    const hdr=cols.map(c=>c.label);
+    const rows=calendarData.map(d=>cols.map(c=>{
+      switch(c.key){case'phase':return d.phase;case'task':return d.task;case'start':return fmtDate(d.start);case'end':return fmtDate(d.end);case'workDays':return d.workDays.toString();default:return'';}
+    }));
+    const cs={};cols.forEach((c,i)=>{if(c.key==='workDays')cs[i]={halign:'right'};});
+    doc.autoTable({startY:y,head:[hdr],body:rows,theme:'grid',styles:{font:'helvetica',fontSize:8,cellPadding:3},headStyles:{fillColor:or,textColor:[255,255,255],fontStyle:'bold',fontSize:8},alternateRowStyles:{fillColor:[245,246,250]},columnStyles:cs,margin:{left:10,right:10}});
+    y=doc.lastAutoTable.finalY+10;
+  }
+
+  if(exportSection==='sov'){
+    const contract=getContractAmount();
+    const miscTotal=sovMiscItems.reduce((s,m)=>s+m.value,0);
+    const distributable=contract-miscTotal;
+    const totalLF=sovElevations.reduce((s,e)=>s+(parseFloat(e.lf)||0),0);
+
+    doc.setFont('helvetica','bold');doc.setFontSize(13);doc.setTextColor(...nv);
+    doc.text('Schedule of Values',10,y);y+=2;
+    doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...gr);
+    doc.text(`Contract: ${fmtWhole(contract)}    Misc Items: ${fmtWhole(miscTotal)}    Distributable: ${fmtWhole(distributable)}`,10,y+4);y+=10;
+
+    const hdr=['Item','Scaffolding','Lath','Scratch','Brown','Finish','Total'];
+    const rows=[];
+    let colSums={};sovSplits.forEach(sp=>{colSums[sp.id]=0;});let grandTotal=0;
+    sovElevations.forEach(e=>{
+      const lf=parseFloat(e.lf)||0;const pct=totalLF>0?(lf/totalLF):0;const ev=distributable*pct;
+      if(ev<=0)return;
+      const cells=sovSplits.map(sp=>({id:sp.id,raw:ev*(sp.pct/100)}));
+      const rounded=cells.map(c=>({id:c.id,val:Math.floor(c.raw),rem:c.raw-Math.floor(c.raw)}));
+      const target=Math.round(ev);let diff=target-rounded.reduce((s,c)=>s+c.val,0);
+      const sorted=[...rounded.map((r,i)=>({...r,i}))].sort((a,b)=>b.rem-a.rem);
+      for(let j=0;j<diff&&j<sorted.length;j++){rounded[sorted[j].i].val+=1;}
+      const r=[e.name];let rt=0;
+      rounded.forEach(c=>{r.push(fmtWhole(c.val));colSums[c.id]+=c.val;rt+=c.val;});
+      r.push(fmtWhole(rt));grandTotal+=rt;rows.push(r);
+    });
+    sovMiscItems.forEach(m=>{if(m.value<=0&&!m.name)return;const mv=Math.round(m.value);rows.push([m.name||'Misc Item','—','—','—','—','—',fmtWhole(mv)]);grandTotal+=mv;});
+    const totRow=['TOTAL'];sovSplits.forEach(sp=>{totRow.push(fmtWhole(colSums[sp.id]));});totRow.push(fmtWhole(grandTotal));rows.push(totRow);
+
+    const cs={1:{halign:'right'},2:{halign:'right'},3:{halign:'right'},4:{halign:'right'},5:{halign:'right'},6:{halign:'right'}};
+    doc.autoTable({startY:y,head:[hdr],body:rows,theme:'grid',styles:{font:'helvetica',fontSize:8,cellPadding:3},headStyles:{fillColor:or,textColor:[255,255,255],fontStyle:'bold',fontSize:8},alternateRowStyles:{fillColor:[245,246,250]},columnStyles:cs,margin:{left:10,right:10}});
+    y=doc.lastAutoTable.finalY+10;
+  }
+
+  if(document.getElementById('export-gantt-toggle')?.checked&&calendarData.length>0){
+    const gc=document.getElementById('gantt-container');
+    const wh=!document.getElementById('view-gantt').classList.contains('active');
+    if(wh){document.getElementById('view-gantt').style.cssText='display:block;position:absolute;left:-9999px';}
+    try{
+      const canvas=await html2canvas(gc,{scale:2,backgroundColor:'#ffffff',logging:false});
+      doc.addPage();
+      doc.setFillColor(...nv);doc.rect(0,0,pw,14,'F');
+      doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(255,255,255);
+      doc.text(jobName+' — Gantt Chart',10,9.5);
+      const img=canvas.toDataURL('image/png');
+      const iw=pw-20,ih=(canvas.height/canvas.width)*iw;
+      const mh=doc.internal.pageSize.getHeight()-30;
+      doc.addImage(img,'PNG',10,20,iw,Math.min(ih,mh));
+    }catch(e){console.error('Gantt export error:',e);}
+    if(wh){document.getElementById('view-gantt').style.cssText='';}
+  }
+
+  const pc=doc.internal.getNumberOfPages();
+  for(let i=1;i<=pc;i++){
+    doc.setPage(i);doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(...gr);
+    const ph=doc.internal.pageSize.getHeight();
+    doc.text(jobName+' — Confidential',10,ph-5);
+    doc.text(`Page ${i} of ${pc}`,pw-10,ph-5,{align:'right'});
+  }
+  doc.save(jobName.replace(/[^a-zA-Z0-9 ]/g,'').replace(/ +/g,'_')+'_schedule.pdf');
+}
+
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+
+// ═══════════════════════════════════════
+// PAGE SWITCHING
+// ═══════════════════════════════════════
+let currentPage='schedule';
+function switchPage(page){
+  currentPage=page;
+  document.getElementById('page-schedule').style.display=page==='schedule'?'':'none';
+  document.getElementById('page-sov').style.display=page==='sov'?'':'none';
+  document.querySelectorAll('.topnav-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.topnav-tab').forEach(t=>{if(t.textContent.trim().toLowerCase()===page||(page==='sov'&&t.textContent.trim()==='SOV'))t.classList.add('active');});
+  if(page==='sov'){renderSovSplits();renderSovElevations();renderSovMisc();calcSOV();}
+}
+
+// ═══════════════════════════════════════
+// SOV STATE
+// ═══════════════════════════════════════
+let sovMiscItems=[]; // {name:'OCIP', value:0}
+let sovElevations=[{name:'Elevation 1',lf:0}];
+let sovSplits=[
+  {id:'scaffold',label:'Scaffolding',pct:25,color:'scaffold'},
+  {id:'lath',label:'Lath',pct:30,color:'lath'},
+  {id:'scratch',label:'Scratch',pct:15,color:'scratch'},
+  {id:'brown',label:'Brown',pct:15,color:'brown'},
+  {id:'finish',label:'Finish',pct:15,color:'finish'},
+];
+let sovData=[]; // for export
+
+function parseCurrency(s){return parseFloat(String(s).replace(/[^0-9.\-]/g,''))||0;}
+function fmtMoney(n){return'$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function fmtWhole(n){return'$'+Math.round(n).toLocaleString('en-US');}
+function formatCurrencyInput(el){
+  const raw=el.value.replace(/[^0-9.]/g,'');
+  el.dataset.raw=raw;
+}
+function getContractAmount(){return parseCurrency(document.getElementById('sov-contract')?.dataset?.raw||document.getElementById('sov-contract')?.value||'0');}
+
+// ─── MISC ITEMS ───
+function addMiscItem(){sovMiscItems.push({name:'',value:0});renderSovMisc();calcSOV();stateChanged();}
+function removeMiscItem(i){sovMiscItems.splice(i,1);renderSovMisc();calcSOV();stateChanged();}
+function renderSovMisc(){
+  const c=document.getElementById('sov-misc-items');if(!c)return;c.innerHTML='';
+  sovMiscItems.forEach((m,i)=>{
+    const d=document.createElement('div');d.className='misc-item';
+    d.innerHTML=`<input type="text" value="${esc(m.name)}" placeholder="Item name" oninput="sovMiscItems[${i}].name=this.value;stateChanged();" />
+      <div class="misc-dollar" style="position:relative;"><span>$</span><input type="text" class="misc-val" value="${m.value||''}" placeholder="0.00" oninput="sovMiscItems[${i}].value=parseCurrency(this.value);calcSOV();stateChanged();" /></div>
+      <button class="misc-remove" onclick="removeMiscItem(${i})">✕</button>`;
+    c.appendChild(d);
+  });
+}
+
+// ─── SPLITS ───
+function renderSovSplits(){
+  const c=document.getElementById('sov-split-rates');if(!c)return;c.innerHTML='';
+  sovSplits.forEach((s,i)=>{
+    const row=document.createElement('div');row.className='rate-row';
+    row.innerHTML=`<span class="task-dot task-dot-${s.color}"></span>
+      <span class="rate-label">${s.label}</span>
+      <input type="number" class="rate-input" value="${s.pct}" min="0" max="100" step="0.1" style="width:70px;" oninput="sovSplits[${i}].pct=parseFloat(this.value)||0;updateSplitTotal();calcSOV();stateChanged();" />
+      <span class="rate-unit">%</span>`;
+    c.appendChild(row);
+  });
+  updateSplitTotal();
+}
+function updateSplitTotal(){
+  const total=sovSplits.reduce((s,r)=>s+r.pct,0);
+  const label=document.getElementById('sov-split-total-label');
+  if(label){
+    label.textContent='Total: '+total.toFixed(1)+'%';
+    label.style.color=Math.abs(total-100)<0.01?'var(--green-600)':'var(--red-600)';
+  }
+}
+
+// ─── ELEVATIONS ───
+function addSovElevation(){sovElevations.push({name:`Elevation ${sovElevations.length+1}`,lf:0});renderSovElevations();calcSOV();stateChanged();}
+function removeSovElevation(i){sovElevations.splice(i,1);renderSovElevations();calcSOV();stateChanged();}
+function renderSovElevations(){
+  const tb=document.getElementById('sov-elevations-body');if(!tb)return;tb.innerHTML='';
+  const totalLF=sovElevations.reduce((s,e)=>s+(parseFloat(e.lf)||0),0);
+  const contract=getContractAmount();
+  const miscTotal=sovMiscItems.reduce((s,m)=>s+m.value,0);
+  const distributable=contract-miscTotal;
+
+  sovElevations.forEach((e,i)=>{
+    const lf=parseFloat(e.lf)||0;
+    const pct=totalLF>0?(lf/totalLF)*100:0;
+    const val=distributable*(pct/100);
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td style="width:36px;"><span class="phase-number">${i+1}</span></td>
+      <td><input class="phase-name-input" value="${esc(e.name)}" oninput="sovElevations[${i}].name=this.value;calcSOV();stateChanged();" /></td>
+      <td style="text-align:right;"><input class="phase-yards-input" type="number" min="0" value="${e.lf}" oninput="sovElevations[${i}].lf=parseFloat(this.value)||0;updateSovElevationCalcs();calcSOV();stateChanged();" /></td>
+      <td class="text-right"><span class="sov-pct" id="sov-pct-${i}">${pct.toFixed(1)}%</span></td>
+      <td class="text-right"><span class="sov-elev-value" id="sov-val-${i}">${fmtMoney(val)}</span></td>
+      <td style="text-align:center;">${sovElevations.length>1?`<button class="btn-icon btn-sm" onclick="removeSovElevation(${i})">✕</button>`:''}</td>`;
+    tb.appendChild(tr);
+  });
+
+  document.getElementById('sov-total-lf').textContent=totalLF.toLocaleString();
+  document.getElementById('sov-total-pct').textContent=totalLF>0?'100.0%':'0.0%';
+  document.getElementById('sov-total-value').textContent=fmtMoney(totalLF>0?distributable:0);
+}
+
+function updateSovElevationCalcs(){
+  const totalLF=sovElevations.reduce((s,e)=>s+(parseFloat(e.lf)||0),0);
+  const contract=getContractAmount();
+  const miscTotal=sovMiscItems.reduce((s,m)=>s+m.value,0);
+  const distributable=contract-miscTotal;
+  sovElevations.forEach((e,i)=>{
+    const lf=parseFloat(e.lf)||0;
+    const pct=totalLF>0?(lf/totalLF)*100:0;
+    const val=Math.round(distributable*(pct/100));
+    const pctEl=document.getElementById('sov-pct-'+i);
+    const valEl=document.getElementById('sov-val-'+i);
+    if(pctEl)pctEl.textContent=pct.toFixed(1)+'%';
+    if(valEl)valEl.textContent=fmtWhole(val);
+  });
+  document.getElementById('sov-total-lf').textContent=totalLF.toLocaleString();
+  document.getElementById('sov-total-pct').textContent=totalLF>0?'100.0%':'0.0%';
+  document.getElementById('sov-total-value').textContent=fmtWhole(totalLF>0?distributable:0);
+}
+
+// ─── CALCULATE SOV ───
+function calcSOV(){
+  const contract=getContractAmount();
+  const miscTotal=sovMiscItems.reduce((s,m)=>s+m.value,0);
+  const distributable=Math.max(0,contract-miscTotal);
+  const totalLF=sovElevations.reduce((s,e)=>s+(parseFloat(e.lf)||0),0);
+
+  document.getElementById('sov-misc-total').textContent=fmtWhole(miscTotal);
+  document.getElementById('sov-distributable').textContent=fmtWhole(distributable);
+
+  updateSovElevationCalcs();
+
+  // Build breakdown table
+  const body=document.getElementById('sov-breakdown-body');if(!body)return;body.innerHTML='';
+  sovData=[];
+  let colTotals={scaffold:0,lath:0,scratch:0,brown:0,finish:0,total:0};
+
+  // Step 1: Calculate raw (unrounded) values for all elevation cells
+  const rawRows=[];
+  sovElevations.forEach(e=>{
+    const lf=parseFloat(e.lf)||0;
+    const pct=totalLF>0?(lf/totalLF):0;
+    const elevVal=distributable*pct;
+    if(elevVal<=0)return;
+    const cells=[];
+    sovSplits.forEach(sp=>{cells.push({id:sp.id,raw:elevVal*(sp.pct/100)});});
+    rawRows.push({name:e.name,cells,rawTotal:elevVal});
+  });
+
+  // Step 2: Smart rounding — round each cell, then fix rounding errors per row
+  rawRows.forEach(rr=>{
+    const row={name:rr.name,type:'elevation'};
+    // Round each task value down
+    const rounded=rr.cells.map(c=>({id:c.id,val:Math.floor(c.raw),remainder:c.raw-Math.floor(c.raw)}));
+    const roundedRowTotal=rounded.reduce((s,c)=>s+c.val,0);
+    const targetRowTotal=Math.round(rr.rawTotal);
+    let diff=targetRowTotal-roundedRowTotal;
+    // Distribute leftover dollars to cells with largest remainders
+    const sorted=[...rounded].sort((a,b)=>b.remainder-a.remainder);
+    for(let i=0;i<diff&&i<sorted.length;i++){sorted[i].val+=1;}
+
+    let rowTotal=0;
+    rounded.forEach(c=>{
+      row[c.id]=c.val;
+      colTotals[c.id]+=c.val;
+      rowTotal+=c.val;
+    });
+    row.total=rowTotal;
+    colTotals.total+=rowTotal;
+    sovData.push(row);
+
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td style="font-weight:500;">${esc(rr.name)}</td>
+      ${sovSplits.map(sp=>`<td class="text-right mono">${fmtWhole(row[sp.id])}</td>`).join('')}
+      <td class="text-right mono" style="font-weight:600;">${fmtWhole(rowTotal)}</td>`;
+    body.appendChild(tr);
+  });
+
+  // Misc items as standalone rows
+  sovMiscItems.forEach(m=>{
+    if(m.value<=0&&!m.name)return;
+    const mv=Math.round(m.value);
+    const row={name:m.name||'Misc Item',type:'misc',scaffold:0,lath:0,scratch:0,brown:0,finish:0,total:mv};
+    sovData.push(row);
+    colTotals.total+=mv;
+
+    const tr=document.createElement('tr');
+    tr.style.cssText='background:var(--gray-50);font-style:italic;color:var(--gray-600);';
+    tr.innerHTML=`<td>${esc(m.name||'Misc Item')}</td>
+      <td class="text-right mono">—</td><td class="text-right mono">—</td><td class="text-right mono">—</td><td class="text-right mono">—</td><td class="text-right mono">—</td>
+      <td class="text-right mono" style="font-weight:600;">${fmtWhole(mv)}</td>`;
+    body.appendChild(tr);
+  });
+
+  // Totals row
+  const totTr=document.createElement('tr');totTr.className='phase-total';
+  totTr.innerHTML=`<td style="font-weight:700;">Subtotals</td>
+    ${sovSplits.map(sp=>`<td class="text-right mono" style="font-weight:700;">${fmtWhole(colTotals[sp.id])}</td>`).join('')}
+    <td class="text-right mono" style="font-weight:700;">${fmtWhole(colTotals.total)}</td>`;
+  body.appendChild(totTr);
+
+  document.getElementById('sov-grand-total').textContent=fmtWhole(colTotals.total);
+
+  // Balance check
+  const bc=document.getElementById('sov-balance-check');
+  if(contract>0){
+    const diff=colTotals.total-Math.round(contract);
+    if(diff===0){bc.innerHTML='<span style="color:var(--green-600);">✓ Balanced — matches contract amount</span>';}
+    else{bc.innerHTML=`<span style="color:var(--red-600);">⚠ Off by ${fmtWhole(Math.abs(diff))} from contract amount</span>`;}
+  }else{bc.innerHTML='';}
+}
+
+function resetSOV(){
+  sovMiscItems=[];sovElevations=[{name:'Elevation 1',lf:0}];
+  sovSplits=[{id:'scaffold',label:'Scaffolding',pct:25,color:'scaffold'},{id:'lath',label:'Lath',pct:30,color:'lath'},{id:'scratch',label:'Scratch',pct:15,color:'scratch'},{id:'brown',label:'Brown',pct:15,color:'brown'},{id:'finish',label:'Finish',pct:15,color:'finish'}];
+  const ci=document.getElementById('sov-contract');if(ci){ci.value='';ci.dataset.raw='';}
+  renderSovSplits();renderSovMisc();renderSovElevations();calcSOV();stateChanged();
 }
 </script>
 </body>
