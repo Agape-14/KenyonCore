@@ -192,7 +192,7 @@ body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--gray-50);co
   <div class="topnav-center">
     <button class="topnav-tab active" onclick="switchPage('schedule')">Schedule</button>
     <button class="topnav-tab" onclick="switchPage('sov')">SOV</button>
-    <button class="topnav-tab">Settings</button>
+    <button class="topnav-tab" disabled style="opacity:0.4;cursor:default;" title="Coming soon">Settings</button>
   </div>
   <div class="topnav-right">
     <button class="btn-icon" id="undo-btn" onclick="undo()" title="Undo (Ctrl+Z)" style="border-color:rgba(255,255,255,0.15);color:var(--gray-400);background:transparent;opacity:0.35;">↩</button>
@@ -268,7 +268,7 @@ body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--gray-50);co
       <div style="overflow-x:auto;">
         <table class="phase-table">
           <thead><tr>
-            <th style="width:40px;"></th><th style="width:36px;">#</th>
+            <th style="width:36px;">#</th>
             <th>Phase Name</th><th style="width:130px;text-align:right;">Total Yards</th><th style="width:60px;"></th>
           </tr></thead>
           <tbody id="phases-body"></tbody>
@@ -713,7 +713,6 @@ function renderPhases(){
   phases.forEach((p,i)=>{
     const tr=document.createElement('tr');
     tr.innerHTML=`
-      <td style="width:40px;"><span class="phase-drag-handle">⠿</span></td>
       <td style="width:36px;"><span class="phase-number">${i+1}</span></td>
       <td><input class="phase-name-input" value="${esc(p.name)}" oninput="phases[${i}].name=this.value;calculateSchedule();stateChanged();" /></td>
       <td style="text-align:right;"><input class="phase-yards-input" type="number" min="0" value="${p.totalYards}" oninput="phases[${i}].totalYards=parseFloat(this.value)||0;calculateSchedule();stateChanged();" /></td>
@@ -726,6 +725,7 @@ function renderPhases(){
 function addPhase(){phases.push({name:`Phase ${phases.length+1}`,totalYards:0});renderPhases();stateChanged();}
 function removePhase(i){phases.splice(i,1);renderPhases();stateChanged();}
 function resetAll(){
+  if(!confirm('Reset all schedule data? This cannot be undone.'))return;
   rates=JSON.parse(JSON.stringify(DEFAULT_RATES));phases=[{name:'Phase 1',totalYards:0}];
   document.getElementById('scaff-start-date').value='';document.getElementById('lath-start-date').value='';
   document.getElementById('job-name').value='';updateJobTitle();
@@ -757,40 +757,42 @@ function calculateSchedule(){
       {id:'brown',label:'Brown',cure:7,cureLabel:'Cure (after Brown)'},
       {id:'finish',label:'Finish',cure:0},
     ];
-    let phaseTotalDays=0;
+    let phaseWorkDays=0,phaseCureDays=0;
     tasks.forEach(t=>{
       const r=rm[t.id];if(!r.included||r.rate<=0)return;
       const days=Math.ceil(qty/r.rate);
-      phaseTotalDays+=days;
+      phaseWorkDays+=days;
       durationData.push({phase:phase.name,task:t.label,quantity:qty,rate:r.rate,duration:days,start:'',end:''});
       const tr=document.createElement('tr');
       tr.innerHTML=`<td></td>
         <td><span class="task-badge"><span class="task-dot task-dot-${r.color}"></span>${t.label}</span></td>
         <td class="text-right mono">${qty.toLocaleString()}</td>
         <td class="text-right mono">${r.rate.toLocaleString()}</td>
-        <td class="text-right mono">${days} day${days!==1?'s':''}</td>
+        <td class="text-right mono">${days} work day${days!==1?'s':''}</td>
         <td class="text-muted">—</td><td class="text-muted">—</td>`;
       ob.appendChild(tr);
       if(t.cure>0){
-        phaseTotalDays+=t.cure;
+        phaseCureDays+=t.cure;
         durationData.push({phase:phase.name,task:t.cureLabel,quantity:null,rate:null,duration:t.cure,start:'',end:''});
         const cr=document.createElement('tr');
         cr.innerHTML=`<td></td>
           <td><span class="task-badge"><span class="task-dot task-dot-cure"></span>${t.cureLabel}</span></td>
           <td class="text-right mono text-muted">—</td><td class="text-right mono text-muted">—</td>
-          <td class="text-right mono">${t.cure} day${t.cure!==1?'s':''}</td>
+          <td class="text-right mono">${t.cure} cal day${t.cure!==1?'s':''}</td>
           <td class="text-muted">—</td><td class="text-muted">—</td>`;
         ob.appendChild(cr);
       }
     });
     // Total duration row for this phase
+    const phaseTotalDays=phaseWorkDays+phaseCureDays;
     if(phaseTotalDays>0){
+      const totalLabel=phaseCureDays>0?`${phaseWorkDays} work + ${phaseCureDays} cure`:`${phaseTotalDays} day${phaseTotalDays!==1?'s':''}`;
       durationData.push({phase:phase.name,task:'TOTAL DURATION',quantity:null,rate:null,duration:phaseTotalDays,start:'',end:'',isTotal:true});
       const tot=document.createElement('tr');tot.className='phase-total';
       tot.innerHTML=`<td></td>
         <td style="font-weight:700;">Total Duration</td>
         <td></td><td></td>
-        <td class="text-right mono" style="font-weight:700;font-size:13px;">${phaseTotalDays} day${phaseTotalDays!==1?'s':''}</td>
+        <td class="text-right mono" style="font-weight:700;font-size:13px;">${totalLabel}</td>
         <td></td><td></td>`;
       ob.appendChild(tot);
     }
@@ -870,7 +872,7 @@ function buildCalendarSchedule(){
     if(rSc.included&&dSc>0){
       const scS=nextWorkday(addCalDays(stg,1));scE=addWorkDays(scS,dSc-1);
       addCR(phase.name,'Scratch',scS,scE,dSc,'scratch');matchDur('Scratch',scS,scE);
-      const c1S=addCalDays(scS,1);c1E=addCalDays(c1S,1);
+      const c1S=addCalDays(scE,1);c1E=addCalDays(c1S,1);
       addCR(phase.name,'Cure (after Scratch)',c1S,c1E,2,'cure');matchDur('Cure (after Scratch)',c1S,c1E);
       stg=c1E;
     }
@@ -879,7 +881,7 @@ function buildCalendarSchedule(){
     if(rB.included&&dB>0){
       const bS=nextWorkday(addCalDays(stg,1));bE=addWorkDays(bS,dB-1);
       addCR(phase.name,'Brown',bS,bE,dB,'brown');matchDur('Brown',bS,bE);
-      const c2S=addCalDays(bS,1);c2E=addCalDays(c2S,6);
+      const c2S=addCalDays(bE,1);c2E=addCalDays(c2S,6);
       addCR(phase.name,'Cure (after Brown)',c2S,c2E,7,'cure');matchDur('Cure (after Brown)',c2S,c2E);
       stg=c2E;
     }
@@ -924,7 +926,7 @@ function buildGantt(){
     if(item.phase!==cp){cp=item.phase;h+=`<div class="gantt-phase-header" style="min-width:${180+tw}px;">${esc(item.phase)}</div>`;}
     const so=dateDiff(mn,item.start),eo=dateDiff(mn,item.end);
     const bl=so*dw,bw=Math.max(dw*0.5,(eo-so+1)*dw-2);
-    h+=`<div class="gantt-row" style="min-width:${180+tw}px;"><div class="gantt-label">${item.task}</div><div class="gantt-track" style="width:${tw}px;min-width:${tw}px;"><div class="gantt-bar gantt-bar-${item.taskType}" style="left:${bl}px;width:${bw}px;" onmouseenter="showTT(event,'${esc(item.task)}: ${fmtDate(item.start)} → ${fmtDate(item.end)} (${item.workDays}d)')" onmouseleave="hideTT()">${item.workDays}d</div></div></div>`;
+    h+=`<div class="gantt-row" style="min-width:${180+tw}px;"><div class="gantt-label">${esc(item.task)}</div><div class="gantt-track" style="width:${tw}px;min-width:${tw}px;"><div class="gantt-bar gantt-bar-${item.taskType}" style="left:${bl}px;width:${bw}px;" onmouseenter="showTT(event,'${escAttr(item.task)}: ${fmtDate(item.start)} → ${fmtDate(item.end)} (${item.workDays}d)')" onmouseleave="hideTT()">${item.workDays}d</div></div></div>`;
   });
   c.innerHTML=h;
 }
@@ -1013,34 +1015,16 @@ function exportExcel(){
 }
 
 function buildSovExcelSheet(wb,jobName){
-  const contract=getContractAmount();
-  const miscTotal=sovMiscItems.reduce((s,m)=>s+m.value,0);
-  const distributable=contract-miscTotal;
-  const totalLF=sovElevations.reduce((s,e)=>s+(parseFloat(e.lf)||0),0);
-  const activeSplits=getActiveSplits();
-
-  const elevs=[];
-  sovElevations.forEach(e=>{
-    const lf=parseFloat(e.lf)||0;const pct=totalLF>0?(lf/totalLF):0;const ev=distributable*pct;
-    if(ev>0)elevs.push({name:e.name,value:ev});
-  });
+  const sg=buildSovGrid();
+  const{elevs,activeSplits,grid,distributable,contract,miscTotal}=sg;
 
   const hdr=['Task',...elevs.map(e=>e.name),'Total'];
 
-  // Global rounding
-  const allCells=[];
-  activeSplits.forEach(sp=>{elevs.forEach(el=>{allCells.push(el.value*(sp.pct/100));});});
-  const target=Math.round(distributable);
-  const fl=allCells.map(v=>Math.floor(v));
-  const rems=allCells.map((v,i)=>({i,rem:v-fl[i]})).sort((a,b)=>b.rem-a.rem);
-  let diff=target-fl.reduce((s,v)=>s+v,0);
-  for(let j=0;j<diff&&j<rems.length;j++){fl[rems[j].i]+=1;}
-
-  const rows=[];let ci=0;
+  const rows=[];
   const elevTotals=elevs.map(()=>0);let grandTotal=0;
-  activeSplits.forEach(sp=>{
+  activeSplits.forEach((sp,si)=>{
     const r=[sp.label];let rt=0;
-    elevs.forEach((el,ei)=>{const v=fl[ci];r.push(v);elevTotals[ei]+=v;rt+=v;ci++;});
+    elevs.forEach((el,ei)=>{const v=grid[si]?grid[si][ei]||0:0;r.push(v);elevTotals[ei]+=v;rt+=v;});
     r.push(rt);grandTotal+=rt;rows.push(r);
   });
   sovMiscItems.forEach(m=>{if(m.value<=0&&!m.name)return;const mv=Math.round(m.value);const r=[m.name||'Misc Item'];elevs.forEach(()=>r.push(''));r.push(mv);grandTotal+=mv;rows.push(r);});
@@ -1101,33 +1085,19 @@ async function exportPDF(){
   }
 
   if(exportSection==='sov'){
-    const contract=getContractAmount();
-    const miscTotal=sovMiscItems.reduce((s,m)=>s+m.value,0);
-    const distributable=contract-miscTotal;
-    const totalLF=sovElevations.reduce((s,e)=>s+(parseFloat(e.lf)||0),0);
-    const activeSplits=getActiveSplits();
+    const sg=buildSovGrid();
+    const{elevs,activeSplits,grid,distributable,contract,miscTotal}=sg;
 
     doc.setFont('helvetica','bold');doc.setFontSize(13);doc.setTextColor(...nv);
     doc.text('Schedule of Values',10,y);y+=2;
     doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...gr);
     doc.text(`Contract: ${fmtWhole(contract)}    Misc Items: ${fmtWhole(miscTotal)}    Distributable: ${fmtWhole(distributable)}`,10,y+4);y+=10;
 
-    const elevs=[];
-    sovElevations.forEach(e=>{const lf=parseFloat(e.lf)||0;const pct=totalLF>0?(lf/totalLF):0;const ev=distributable*pct;if(ev>0)elevs.push({name:e.name,value:ev});});
-
     const hdr=['Task',...elevs.map(e=>e.name),'Total'];
-    const allCells=[];
-    activeSplits.forEach(sp=>{elevs.forEach(el=>{allCells.push(el.value*(sp.pct/100));});});
-    const target=Math.round(distributable);
-    const fl=allCells.map(v=>Math.floor(v));
-    const rems=allCells.map((v,i)=>({i,rem:v-fl[i]})).sort((a,b)=>b.rem-a.rem);
-    let diff=target-fl.reduce((s,v)=>s+v,0);
-    for(let j=0;j<diff&&j<rems.length;j++){fl[rems[j].i]+=1;}
-
-    const rows=[];let ci=0;const elevTotals=elevs.map(()=>0);let grandTotal=0;
-    activeSplits.forEach(sp=>{
+    const rows=[];const elevTotals=elevs.map(()=>0);let grandTotal=0;
+    activeSplits.forEach((sp,si)=>{
       const r=[sp.label];let rt=0;
-      elevs.forEach((el,ei)=>{const v=fl[ci];r.push(fmtWhole(v));elevTotals[ei]+=v;rt+=v;ci++;});
+      elevs.forEach((el,ei)=>{const v=grid[si]?grid[si][ei]||0:0;r.push(fmtWhole(v));elevTotals[ei]+=v;rt+=v;});
       r.push(fmtWhole(rt));grandTotal+=rt;rows.push(r);
     });
     sovMiscItems.forEach(m=>{if(m.value<=0&&!m.name)return;const mv=Math.round(m.value);const r=[m.name||'Misc Item'];elevs.forEach(()=>r.push('—'));r.push(fmtWhole(mv));grandTotal+=mv;rows.push(r);});
@@ -1167,6 +1137,7 @@ async function exportPDF(){
 }
 
 function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+function escAttr(s){return esc(s).replace(/'/g,'&#39;').replace(/"/g,'&quot;');}
 
 // ═══════════════════════════════════════
 // PAGE SWITCHING
@@ -1200,6 +1171,37 @@ let sovData=[]; // for export
 function parseCurrency(s){return parseFloat(String(s).replace(/[^0-9.\-]/g,''))||0;}
 function fmtMoney(n){return'$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function fmtWhole(n){return'$'+Math.round(n).toLocaleString('en-US');}
+
+// Largest-remainder rounding: distributes `target` across `rawValues` so integers sum exactly to target
+function largestRemainderRound(rawValues,target){
+  const t=Math.round(target);
+  const fl=rawValues.map(v=>Math.floor(v));
+  const rems=rawValues.map((v,i)=>({i,rem:v-fl[i]})).sort((a,b)=>b.rem-a.rem);
+  let diff=t-fl.reduce((s,v)=>s+v,0);
+  for(let j=0;j<diff&&j<rems.length;j++){fl[rems[j].i]+=1;}
+  return fl;
+}
+
+// Build SOV grid data (shared by calcSOV, buildSovExcelSheet, exportPDF)
+function buildSovGrid(){
+  const contract=getContractAmount();
+  const miscTotal=sovMiscItems.reduce((s,m)=>s+m.value,0);
+  const distributable=Math.max(0,contract-miscTotal);
+  const totalLF=sovElevations.reduce((s,e)=>s+(parseFloat(e.lf)||0),0);
+  const activeSplits=getActiveSplits();
+  const elevs=[];
+  sovElevations.forEach(e=>{
+    const lf=parseFloat(e.lf)||0;const pct=totalLF>0?(lf/totalLF):0;const ev=distributable*pct;
+    if(ev>0)elevs.push({name:e.name,pct,value:ev});
+  });
+  if(elevs.length===0||activeSplits.length===0)return{elevs,activeSplits,grid:[],distributable,contract,miscTotal};
+  const rawCells=[];
+  activeSplits.forEach(sp=>{elevs.forEach(el=>{rawCells.push(el.value*(sp.pct/100));});});
+  const rounded=largestRemainderRound(rawCells,distributable);
+  const grid=[];let ci=0;
+  activeSplits.forEach((sp,si)=>{grid[si]=[];elevs.forEach((el,ei)=>{grid[si][ei]=rounded[ci];ci++;});});
+  return{elevs,activeSplits,grid,distributable,contract,miscTotal};
+}
 function formatCurrencyInput(el){
   const raw=el.value.replace(/[^0-9.]/g,'');
   el.dataset.raw=raw;
@@ -1322,10 +1324,8 @@ function updateSovElevationCalcs(){
 
 // ─── CALCULATE SOV ───
 function calcSOV(){
-  const contract=getContractAmount();
-  const miscTotal=sovMiscItems.reduce((s,m)=>s+m.value,0);
-  const distributable=Math.max(0,contract-miscTotal);
-  const totalLF=sovElevations.reduce((s,e)=>s+(parseFloat(e.lf)||0),0);
+  const sg=buildSovGrid();
+  const{elevs,activeSplits,grid,distributable,contract,miscTotal}=sg;
 
   document.getElementById('sov-misc-total').textContent=fmtWhole(miscTotal);
   document.getElementById('sov-distributable').textContent=fmtWhole(distributable);
@@ -1337,42 +1337,7 @@ function calcSOV(){
   if(!head||!body)return;head.innerHTML='';body.innerHTML='';
   sovData=[];
 
-  const activeSplits=getActiveSplits();
-  // Get elevations with value
-  const elevs=[];
-  sovElevations.forEach(e=>{
-    const lf=parseFloat(e.lf)||0;
-    const pct=totalLF>0?(lf/totalLF):0;
-    const ev=distributable*pct;
-    if(ev>0)elevs.push({name:e.name,pct,value:ev});
-  });
-
   if(elevs.length===0||activeSplits.length===0){return;}
-
-  // Step 1: Collect ALL raw cell values [split x elevation]
-  const allCells=[];
-  activeSplits.forEach(sp=>{
-    elevs.forEach(el=>{
-      allCells.push({splitId:sp.id||sp.label,elevName:el.name,raw:el.value*(sp.pct/100)});
-    });
-  });
-
-  // Step 2: Global largest-remainder rounding
-  const target=Math.round(distributable);
-  const floored=allCells.map(c=>Math.floor(c.raw));
-  const rems=allCells.map((c,i)=>({i,rem:c.raw-floored[i]})).sort((a,b)=>b.rem-a.rem);
-  let diff=target-floored.reduce((s,v)=>s+v,0);
-  for(let j=0;j<diff&&j<rems.length;j++){floored[rems[j].i]+=1;}
-
-  // Build lookup: [splitIdx][elevIdx] = rounded value
-  const grid=[];
-  let ci=0;
-  activeSplits.forEach((sp,si)=>{
-    grid[si]=[];
-    elevs.forEach((el,ei)=>{
-      grid[si][ei]=floored[ci];ci++;
-    });
-  });
 
   // Build header: Task | Elev1 | Elev2 | ... | Total
   const htr=document.createElement('tr');
@@ -1437,6 +1402,7 @@ function calcSOV(){
 }
 
 function resetSOV(){
+  if(!confirm('Reset all SOV data? This cannot be undone.'))return;
   sovMiscItems=[];sovElevations=[{name:'Elevation 1',lf:0}];
   sovSplits=[{id:'scaffold',label:'Scaffolding',pct:25,color:'scaffold',core:true,included:true},{id:'lath',label:'Lath',pct:30,color:'lath',core:true,included:true},{id:'scratch',label:'Scratch',pct:15,color:'scratch',core:true,included:true},{id:'brown',label:'Brown',pct:15,color:'brown',core:true,included:true},{id:'finish',label:'Finish',pct:15,color:'finish',core:true,included:true}];
   sovCustomSplits=[];sovCustomCounter=0;
