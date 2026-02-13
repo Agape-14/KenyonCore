@@ -16,7 +16,7 @@ body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--gray-50);co
 
 .topnav{background:var(--navy-900);height:56px;display:flex;align-items:center;padding:0 24px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,0.2)}
 .topnav-logo{display:flex;align-items:center;gap:10px;color:var(--white);font-weight:700;font-size:18px;letter-spacing:-0.5px}
-.topnav-logo .kc-mark{font-weight:400;opacity:0.5;margin-left:2px}
+.topnav-logo .kc-logo{height:36px;width:auto;color:var(--white);flex-shrink:0}
 .topnav-center{flex:1;display:flex;justify-content:center;gap:4px}
 .topnav-tab{color:var(--gray-400);padding:8px 16px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;cursor:pointer;transition:var(--transition);border:none;background:none}
 .topnav-tab:hover{color:var(--gray-200);background:rgba(255,255,255,0.06)}
@@ -188,7 +188,28 @@ body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--gray-50);co
 <body>
 
 <nav class="topnav">
-  <div class="topnav-logo">Kenyon<span style="color:var(--gray-300);">Core</span></div>
+  <div class="topnav-logo">
+    <svg class="kc-logo" viewBox="0 0 200 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Outer border -->
+      <rect x="4" y="4" width="192" height="232" rx="6" stroke="currentColor" stroke-width="5"/>
+      <!-- Inner border -->
+      <rect x="13" y="13" width="174" height="214" rx="3" stroke="currentColor" stroke-width="2"/>
+      <!-- KENYON text -->
+      <text x="100" y="48" text-anchor="middle" fill="currentColor" font-family="Georgia,'Times New Roman',serif" font-size="28" font-weight="700" letter-spacing="6">KENYON</text>
+      <!-- Decorative rule -->
+      <line x1="28" y1="58" x2="172" y2="58" stroke="currentColor" stroke-width="1.5"/>
+      <!-- Shield -->
+      <path d="M46,68 L154,68 L154,148 Q154,190 100,210 Q46,190 46,148 Z" stroke="currentColor" stroke-width="4" fill="none"/>
+      <!-- K monogram left -->
+      <path d="M88,92 Q72,142 88,188 L100,150 Z" fill="currentColor"/>
+      <!-- K monogram right -->
+      <path d="M112,92 Q128,142 112,188 L100,150 Z" fill="currentColor"/>
+      <!-- Banner ribbon -->
+      <path d="M26,198 L44,190 L156,190 L174,198 L156,206 L44,206 Z" fill="currentColor"/>
+      <text x="100" y="202" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-size="13" font-weight="700" letter-spacing="2" fill="var(--navy-900)">EST. 1978</text>
+    </svg>
+    Kenyon<span style="color:var(--gray-300);">Core</span>
+  </div>
   <div class="topnav-center">
     <button class="topnav-tab active" onclick="switchPage('schedule')">Schedule</button>
     <button class="topnav-tab" onclick="switchPage('sov')">SOV</button>
