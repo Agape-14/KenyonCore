@@ -872,7 +872,7 @@ function buildCalendarSchedule(){
     if(rSc.included&&dSc>0){
       const scS=nextWorkday(addCalDays(stg,1));scE=addWorkDays(scS,dSc-1);
       addCR(phase.name,'Scratch',scS,scE,dSc,'scratch');matchDur('Scratch',scS,scE);
-      const c1S=addCalDays(scE,1);c1E=addCalDays(c1S,1);
+      const c1S=addCalDays(scS,1);c1E=addCalDays(c1S,1);
       addCR(phase.name,'Cure (after Scratch)',c1S,c1E,2,'cure');matchDur('Cure (after Scratch)',c1S,c1E);
       stg=c1E;
     }
@@ -881,7 +881,7 @@ function buildCalendarSchedule(){
     if(rB.included&&dB>0){
       const bS=nextWorkday(addCalDays(stg,1));bE=addWorkDays(bS,dB-1);
       addCR(phase.name,'Brown',bS,bE,dB,'brown');matchDur('Brown',bS,bE);
-      const c2S=addCalDays(bE,1);c2E=addCalDays(c2S,6);
+      const c2S=addCalDays(bS,1);c2E=addCalDays(c2S,6);
       addCR(phase.name,'Cure (after Brown)',c2S,c2E,7,'cure');matchDur('Cure (after Brown)',c2S,c2E);
       stg=c2E;
     }
