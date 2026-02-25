@@ -1,0 +1,243 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Users & Auth ────────────────────────────────────────────────
+
+enum Role {
+  ADMIN
+  PROJECT_MANAGER
+  FIELD_CREW
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  passwordHash  String
+  role          Role      @default(FIELD_CREW)
+  phone         String?
+  avatarUrl     String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  managedJobs   Job[]     @relation("ProjectManager")
+  assignments   JobAssignment[]
+  notifications Notification[]
+  invoices      Invoice[]
+}
+
+// ─── Jobs ────────────────────────────────────────────────────────
+
+enum JobStatus {
+  PLANNING
+  IN_PROGRESS
+  ON_HOLD
+  COMPLETED
+  CANCELLED
+}
+
+model Job {
+  id              String      @id @default(cuid())
+  name            String
+  jobNumber       String      @unique
+  address         String?
+  clientName      String?
+  description     String?
+  status          JobStatus   @default(PLANNING)
+  startDate       DateTime?
+  endDate         DateTime?
+  budgetTotal     Float       @default(0)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  projectManagerId String?
+  projectManager   User?       @relation("ProjectManager", fields: [projectManagerId], references: [id])
+  assignments      JobAssignment[]
+  materials        JobMaterial[]
+  invoices         Invoice[]
+  notifications    Notification[]
+
+  @@index([status])
+  @@index([projectManagerId])
+}
+
+model JobAssignment {
+  id        String   @id @default(cuid())
+  jobId     String
+  userId    String
+  role      String?
+  createdAt DateTime @default(now())
+
+  job  Job  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId, userId])
+}
+
+// ─── Materials Catalog ───────────────────────────────────────────
+
+enum Trade {
+  PLUMBING
+  ELECTRICAL
+  HVAC
+  GENERAL
+  CARPENTRY
+  PAINTING
+  ROOFING
+  FLOORING
+  CONCRETE
+  LANDSCAPING
+}
+
+model CatalogCategory {
+  id          String            @id @default(cuid())
+  name        String
+  trade       Trade
+  sortOrder   Int               @default(0)
+  createdAt   DateTime          @default(now())
+
+  subcategories CatalogSubcategory[]
+
+  @@unique([name, trade])
+}
+
+model CatalogSubcategory {
+  id          String          @id @default(cuid())
+  name        String
+  categoryId  String
+  sortOrder   Int             @default(0)
+
+  category    CatalogCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  items       CatalogItem[]
+
+  @@unique([name, categoryId])
+}
+
+model CatalogItem {
+  id              String             @id @default(cuid())
+  name            String
+  description     String?
+  defaultUnit     String             @default("each")
+  estimatedPrice  Float?
+  subcategoryId   String
+  createdAt       DateTime           @default(now())
+
+  subcategory     CatalogSubcategory @relation(fields: [subcategoryId], references: [id], onDelete: Cascade)
+  jobMaterials    JobMaterial[]
+}
+
+// ─── Job Materials (Checklist) ───────────────────────────────────
+
+enum MaterialStatus {
+  NEEDED
+  ORDERED
+  DELIVERED
+  INSTALLED
+  RETURNED
+}
+
+model JobMaterial {
+  id              String         @id @default(cuid())
+  jobId           String
+  catalogItemId   String?
+  customName      String?
+  description     String?
+  unit            String         @default("each")
+  quantityNeeded  Float          @default(0)
+  quantityOrdered Float          @default(0)
+  quantityOnSite  Float          @default(0)
+  unitCost        Float?
+  status          MaterialStatus @default(NEEDED)
+  vendor          String?
+  notes           String?
+  trade           Trade          @default(GENERAL)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  job             Job            @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  catalogItem     CatalogItem?   @relation(fields: [catalogItemId], references: [id])
+  invoiceItems    InvoiceItem[]
+
+  @@index([jobId])
+  @@index([status])
+}
+
+// ─── Invoices ────────────────────────────────────────────────────
+
+enum InvoiceStatus {
+  PENDING
+  APPROVED
+  DISPUTED
+  PAID
+}
+
+model Invoice {
+  id              String        @id @default(cuid())
+  jobId           String
+  uploadedById    String
+  vendorName      String?
+  invoiceNumber   String?
+  invoiceDate     DateTime?
+  totalAmount     Float?
+  taxAmount       Float?
+  status          InvoiceStatus @default(PENDING)
+  fileUrl         String?
+  fileName        String?
+  rawText         String?
+  aiExtracted     Json?
+  notes           String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  job             Job           @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  uploadedBy      User          @relation(fields: [uploadedById], references: [id])
+  items           InvoiceItem[]
+
+  @@index([jobId])
+  @@index([vendorName])
+}
+
+model InvoiceItem {
+  id            String       @id @default(cuid())
+  invoiceId     String
+  jobMaterialId String?
+  description   String?
+  quantity      Float?
+  unitPrice     Float?
+  totalPrice    Float?
+
+  invoice       Invoice      @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  jobMaterial   JobMaterial?  @relation(fields: [jobMaterialId], references: [id])
+}
+
+// ─── Notifications ───────────────────────────────────────────────
+
+enum NotificationType {
+  MATERIAL_LOW
+  INVOICE_UPLOADED
+  BUDGET_ALERT
+  STATUS_CHANGE
+  GENERAL
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  jobId     String?
+  type      NotificationType @default(GENERAL)
+  title     String
+  message   String
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  job       Job?             @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+}
