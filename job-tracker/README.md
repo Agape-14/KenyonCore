@@ -11,14 +11,27 @@ plugin.
 
 ## Run it
 
-It's a single self-contained file — no build step, no server:
+No build step, no server, **no external CDNs** — serve the folder with any
+static host (or open it locally):
 
 ```
-open job-tracker/index.html        # macOS
-# or just double-click the file, or serve the folder with any static host
+# from the repo root
+python3 -m http.server 8765
+# then visit http://127.0.0.1:8765/job-tracker/index.html
 ```
 
-All third-party libraries (Leaflet, MarkerCluster, SheetJS) load from CDNs.
+> Tip: load it via a local server rather than `file://` so the browser allows
+> the vendored fonts/scripts and the Nominatim geocoding fetches.
+
+All third-party libraries are **vendored** in `job-tracker/vendor/` (Leaflet,
+MarkerCluster, SheetJS) along with the DM Sans / JetBrains Mono fonts, so the
+app runs with zero internet access — ideal behind a corporate firewall and as
+the basis for a WordPress plugin (the libs ship inside the plugin).
+
+The **only** runtime network calls are: map tiles (free CartoDB tile server)
+and address geocoding (free OpenStreetMap Nominatim). Both are optional —
+without them the app still runs; the map just shows no basemap imagery and new
+addresses won't auto-locate.
 
 ## Key features
 

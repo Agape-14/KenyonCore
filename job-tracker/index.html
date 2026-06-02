@@ -5,20 +5,28 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>KenyonCore — Job Tracker</title>
 
-<!-- KenyonCore house fonts -->
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<!-- All dependencies are vendored locally (see ./vendor) so the app needs no
+     external CDN / internet access — works behind firewalls and as a WP plugin. -->
 
 <!-- Map engine: Leaflet + marker clustering (free, no API key) -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<link rel="stylesheet" href="vendor/leaflet/leaflet.css"/>
+<link rel="stylesheet" href="vendor/markercluster/MarkerCluster.css"/>
+<link rel="stylesheet" href="vendor/markercluster/MarkerCluster.Default.css"/>
+<script src="vendor/leaflet/leaflet.js"></script>
+<script src="vendor/markercluster/leaflet.markercluster.js"></script>
 
-<!-- Excel read/write (same lib KenyonCore already uses) -->
-<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+<!-- Excel read/write (same lib the KenyonCore estimating app uses) -->
+<script src="vendor/xlsx/xlsx.bundle.js"></script>
 
 <style>
+/* Self-hosted KenyonCore house fonts (no Google Fonts dependency) */
+@font-face{font-family:'DM Sans';font-weight:400;font-style:normal;font-display:swap;src:url('vendor/fonts/dm-sans-latin-400-normal.woff2') format('woff2')}
+@font-face{font-family:'DM Sans';font-weight:500;font-style:normal;font-display:swap;src:url('vendor/fonts/dm-sans-latin-500-normal.woff2') format('woff2')}
+@font-face{font-family:'DM Sans';font-weight:600;font-style:normal;font-display:swap;src:url('vendor/fonts/dm-sans-latin-600-normal.woff2') format('woff2')}
+@font-face{font-family:'DM Sans';font-weight:700;font-style:normal;font-display:swap;src:url('vendor/fonts/dm-sans-latin-700-normal.woff2') format('woff2')}
+@font-face{font-family:'JetBrains Mono';font-weight:400;font-style:normal;font-display:swap;src:url('vendor/fonts/jetbrains-mono-latin-400-normal.woff2') format('woff2')}
+@font-face{font-family:'JetBrains Mono';font-weight:500;font-style:normal;font-display:swap;src:url('vendor/fonts/jetbrains-mono-latin-500-normal.woff2') format('woff2')}
+
 /* ============================================================
    KenyonCore design system (shared with the estimating app)
    ============================================================ */
