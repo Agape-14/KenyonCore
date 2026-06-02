@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>KenyonCore — Job Tracker</title>
+
+<!-- KenyonCore house fonts -->
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<!-- Map engine: Leaflet + marker clustering (free, no API key) -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+<!-- Excel read/write (same lib KenyonCore already uses) -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+
+<style>
+/* ============================================================
+   KenyonCore design system (shared with the estimating app)
+   ============================================================ */
+:root{
+  --accent:#1B3A6B;--accent-hover:#24508F;--accent-light:#E8EEF6;
+  --navy-900:#1B2A4A;--navy-800:#243558;
+  --gray-900:#1A1D26;--gray-800:#2A2E3A;--gray-700:#3D4255;--gray-600:#555B6E;
+  --gray-500:#6E7489;--gray-400:#9197AB;--gray-300:#B8BDD0;--gray-200:#D6DAE5;
+  --gray-100:#ECEEF4;--gray-50:#F5F6FA;--white:#FFFFFF;
+  --green-600:#16A34A;--green-100:#DCFCE7;--red-600:#DC2626;--red-100:#FEE2E2;
+  --blue-600:#2563EB;--blue-100:#DBEAFE;--yellow-500:#EAB308;--yellow-100:#FEF9C3;
+  --gray-badge:#6E7489;
+  --radius-sm:6px;--radius-md:8px;--radius-lg:12px;
+  --shadow-sm:0 1px 2px rgba(27,42,74,.06);--shadow-md:0 4px 12px rgba(27,42,74,.08);
+  --shadow-lg:0 8px 30px rgba(27,42,74,.12);
+  --transition:150ms cubic-bezier(.4,0,.2,1);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--gray-50);color:var(--gray-900);min-height:100vh}
+
+/* Top nav */
+.topnav{background:var(--navy-900);height:56px;display:flex;align-items:center;padding:0 24px;position:sticky;top:0;z-index:1000;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.topnav-logo{display:flex;align-items:center;gap:8px;color:#fff;font-weight:700;font-size:18px;letter-spacing:-.5px}
+.topnav-logo .core{color:var(--gray-300);font-size:14px;font-weight:400;opacity:.6}
+.topnav-logo .sep{color:var(--gray-500);font-weight:300;margin:0 2px}
+.topnav-logo .app{color:#fff;font-size:14px;font-weight:600;opacity:.95}
+.topnav-center{flex:1;display:flex;justify-content:center;gap:4px}
+.topnav-tab{color:var(--gray-400);padding:8px 16px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;cursor:pointer;transition:var(--transition);border:none;background:none;font-family:inherit}
+.topnav-tab:hover{color:var(--gray-200);background:rgba(255,255,255,.06)}
+.topnav-tab.active{color:#fff;background:rgba(255,255,255,.1)}
+.topnav-right{display:flex;align-items:center;gap:10px}
+
+/* Division selector */
+.division-select{background:var(--navy-800);color:#fff;border:1px solid rgba(255,255,255,.15);border-radius:var(--radius-sm);padding:7px 12px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:var(--transition);max-width:240px}
+.division-select:hover{border-color:rgba(255,255,255,.35)}
+.division-select:focus{outline:none;border-color:var(--accent-hover)}
+
+/* Page header */
+.page-header{background:#fff;border-bottom:1px solid var(--gray-200);padding:18px 32px}
+.page-header-inner{max-width:1400px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
+.page-title-group{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.page-title{font-size:22px;font-weight:700;color:var(--gray-900);letter-spacing:-.5px}
+.page-sub{font-size:13px;color:var(--gray-500)}
+.badge{font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:.5px}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:var(--radius-sm);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:var(--transition);border:none;white-space:nowrap;text-decoration:none}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent-hover);transform:translateY(-1px);box-shadow:0 4px 12px rgba(27,58,107,.3)}
+.btn-secondary{background:#fff;color:var(--gray-700);border:1px solid var(--gray-300)}
+.btn-secondary:hover{background:var(--gray-50);border-color:var(--gray-400)}
+.btn-danger{background:var(--red-600);color:#fff}
+.btn-danger:hover{filter:brightness(1.08)}
+.btn-ghost{background:none;color:var(--gray-600);border:1px solid transparent}
+.btn-ghost:hover{background:var(--gray-100);color:var(--gray-900)}
+.btn-sm{padding:6px 11px;font-size:12px}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none!important;box-shadow:none!important}
+
+/* Dashboard stat cards */
+.stats{max-width:1400px;margin:0 auto;padding:20px 32px 0;display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+@media(max-width:900px){.stats{grid-template-columns:repeat(2,1fr)}}
+.stat-card{background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius-lg);padding:16px 18px;box-shadow:var(--shadow-sm);position:relative;overflow:hidden}
+.stat-card .dot{position:absolute;top:16px;right:16px;width:10px;height:10px;border-radius:50%}
+.stat-value{font-size:28px;font-weight:700;letter-spacing:-1px;color:var(--gray-900);line-height:1}
+.stat-label{font-size:12px;font-weight:600;color:var(--gray-500);text-transform:uppercase;letter-spacing:.5px;margin-top:8px}
+
+/* Main content */
+.main-content{max-width:1400px;margin:0 auto;padding:20px 32px 60px}
+.card{background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);overflow:hidden}
+.card-header{padding:14px 20px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.card-title{font-size:14px;font-weight:700;color:var(--gray-800);text-transform:uppercase;letter-spacing:.5px}
+.card-body{padding:18px 20px}
+
+/* Map */
+#map{height:620px;width:100%;border-radius:0 0 var(--radius-lg) var(--radius-lg)}
+.map-legend{display:flex;gap:18px;flex-wrap:wrap;align-items:center}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--gray-600)}
+.legend-dot{width:11px;height:11px;border-radius:50%}
+.leaflet-popup-content{font-family:'DM Sans',sans-serif;margin:14px 16px}
+.popup-name{font-size:15px;font-weight:700;color:var(--gray-900);margin-bottom:2px}
+.popup-meta{font-size:12px;color:var(--gray-500);margin-bottom:8px}
+.popup-notes{font-size:12px;color:var(--gray-700);background:var(--gray-50);border-radius:6px;padding:6px 8px;margin:8px 0;line-height:1.4}
+.marker-pin{width:18px;height:18px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4)}
+
+/* Forms */
+.form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+@media(max-width:640px){.form-grid{grid-template-columns:1fr}}
+.form-group{display:flex;flex-direction:column}
+.form-group.full{grid-column:1/-1}
+.form-label{font-size:12px;font-weight:600;color:var(--gray-600);margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px}
+.form-label .req{color:var(--red-600)}
+.form-input,.form-select,textarea.form-input{width:100%;padding:9px 12px;border:1px solid var(--gray-200);border-radius:var(--radius-sm);font-family:inherit;font-size:14px;color:var(--gray-900);background:#fff;transition:var(--transition)}
+.form-input:focus,.form-select:focus,textarea.form-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(27,58,107,.1)}
+textarea.form-input{resize:vertical;min-height:70px}
+.form-hint{font-size:11px;color:var(--gray-400);margin-top:4px}
+.form-error{font-size:12px;color:var(--red-600);font-weight:500;margin-top:4px}
+
+/* Toolbar (list filters) */
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.search-box{flex:1;min-width:200px;position:relative}
+.search-box input{padding-left:34px}
+.search-box .icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--gray-400)}
+
+/* Job list */
+.job-list{display:flex;flex-direction:column;gap:10px}
+.job-item{border:1px solid var(--gray-200);border-radius:var(--radius-md);transition:var(--transition);background:#fff}
+.job-item:hover{border-color:var(--gray-300);box-shadow:var(--shadow-sm)}
+.job-head{display:flex;align-items:center;gap:14px;padding:14px 16px;cursor:pointer}
+.job-status-bar{width:4px;align-self:stretch;border-radius:4px;flex-shrink:0}
+.job-info{flex:1;min-width:0}
+.job-name{font-size:15px;font-weight:700;color:var(--gray-900);display:flex;align-items:center;gap:8px}
+.job-jobnum{font-size:11px;font-weight:600;color:var(--gray-400);font-family:'JetBrains Mono',monospace}
+.job-addr{font-size:13px;color:var(--gray-500);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.job-right{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.job-date{font-size:12px;color:var(--gray-400)}
+.chevron{color:var(--gray-400);transition:transform var(--transition)}
+.job-item.open .chevron{transform:rotate(90deg)}
+.job-detail{display:none;padding:0 16px 16px 34px;border-top:1px solid var(--gray-100);margin-top:-2px}
+.job-item.open .job-detail{display:block;padding-top:14px}
+
+/* Empty state */
+.empty{text-align:center;padding:60px 20px;color:var(--gray-400)}
+.empty svg{margin-bottom:14px;opacity:.6}
+.empty h3{font-size:16px;color:var(--gray-600);font-weight:600;margin-bottom:6px}
+.empty p{font-size:13px}
+
+/* Import flow */
+.dropzone{border:2px dashed var(--gray-300);border-radius:var(--radius-lg);padding:44px 24px;text-align:center;cursor:pointer;transition:var(--transition);background:var(--gray-50)}
+.dropzone:hover,.dropzone.drag{border-color:var(--accent);background:var(--accent-light)}
+.dropzone svg{color:var(--accent);margin-bottom:12px}
+.dropzone h3{font-size:16px;font-weight:700;color:var(--gray-800);margin-bottom:4px}
+.dropzone p{font-size:13px;color:var(--gray-500)}
+.import-steps{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.istep{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:var(--gray-400)}
+.istep .num{width:22px;height:22px;border-radius:50%;background:var(--gray-200);color:var(--gray-500);display:inline-flex;align-items:center;justify-content:center;font-size:11px}
+.istep.active{color:var(--accent)}
+.istep.active .num{background:var(--accent);color:#fff}
+.istep.done .num{background:var(--green-600);color:#fff}
+.istep .arrow{color:var(--gray-300)}
+.progress{height:8px;background:var(--gray-200);border-radius:8px;overflow:hidden;margin:8px 0}
+.progress-bar{height:100%;background:var(--accent);transition:width .2s;width:0}
+.summary-row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+.summary-pill{padding:10px 16px;border-radius:var(--radius-md);font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;border:1px solid}
+.summary-pill .n{font-size:18px;font-weight:700}
+.sp-ok{background:var(--green-100);border-color:#bbf7d0;color:#166534}
+.sp-warn{background:var(--yellow-100);border-color:#fde68a;color:#92400E}
+.sp-err{background:var(--red-100);border-color:#fecaca;color:#991B1B}
+
+/* Tables */
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gray-500);padding:9px 10px;text-align:left;background:var(--gray-50);border-bottom:1px solid var(--gray-200)}
+.tbl td{padding:8px 10px;border-bottom:1px solid var(--gray-100);vertical-align:top}
+.tbl input,.tbl select{width:100%;padding:6px 8px;border:1px solid var(--gray-200);border-radius:5px;font-family:inherit;font-size:12px}
+.tbl input:focus,.tbl select:focus{outline:none;border-color:var(--accent)}
+.issue-tag{display:inline-block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:2px 7px;border-radius:10px;background:var(--red-100);color:#991B1B;margin:1px 2px 1px 0}
+.issue-tag.warn{background:var(--yellow-100);color:#92400E}
+.issue-tag.ok{background:var(--green-100);color:#166534}
+
+/* Toast */
+#toast-wrap{position:fixed;bottom:24px;right:24px;z-index:3000;display:flex;flex-direction:column;gap:10px}
+.toast{background:var(--gray-900);color:#fff;padding:12px 18px;border-radius:var(--radius-md);font-size:13px;font-weight:500;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:10px;animation:slidein .25s ease}
+.toast.ok{background:var(--green-600)}
+.toast.err{background:var(--red-600)}
+.toast.warn{background:var(--yellow-500);color:#1A1D26}
+@keyframes slidein{from{transform:translateX(40px);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* Modal */
+.modal-bg{position:fixed;inset:0;background:rgba(27,42,74,.5);z-index:2000;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-bg.show{display:flex}
+.modal{background:#fff;border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);max-width:440px;width:100%;padding:24px}
+.modal h3{font-size:17px;font-weight:700;margin-bottom:8px}
+.modal p{font-size:14px;color:var(--gray-600);margin-bottom:20px;line-height:1.5}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end}
+
+.divider{height:1px;background:var(--gray-100);margin:16px 0}
+.hidden{display:none!important}
+.row-gap{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.note-saved{font-size:11px;color:var(--green-600);font-weight:600;opacity:0;transition:opacity .2s}
+.note-saved.show{opacity:1}
+</style>
+</head>
+<body>
+
+<!-- ===================== TOP NAV ===================== -->
+<nav class="topnav">
+  <div class="topnav-logo">
+    Kenyon<span class="core">Core</span>
+    <span class="sep">/</span>
+    <span class="app">Job Tracker</span>
+  </div>
+  <div class="topnav-center">
+    <button class="topnav-tab active" data-tab="map" onclick="App.switchTab('map')">Map</button>
+    <button class="topnav-tab" data-tab="list" onclick="App.switchTab('list')">Jobs</button>
+    <button class="topnav-tab" data-tab="add" onclick="App.switchTab('add')">Add Job</button>
+    <button class="topnav-tab" data-tab="import" onclick="App.switchTab('import')">Bulk Import</button>
+  </div>
+  <div class="topnav-right">
+    <select id="divisionSelect" class="division-select" onchange="App.onDivisionChange(this.value)"></select>
+  </div>
+</nav>
+
+<!-- ===================== PAGE HEADER ===================== -->
+<div class="page-header">
+  <div class="page-header-inner">
+    <div class="page-title-group">
+      <span class="page-title" id="pageTitle">Map</span>
+      <span class="page-sub" id="pageSub"></span>
+    </div>
+    <div class="page-actions" id="pageActions"></div>
+  </div>
+</div>
+
+<!-- ===================== DASHBOARD STATS ===================== -->
+<div class="stats" id="stats"></div>
+
+<!-- ===================== MAIN CONTENT ===================== -->
+<div class="main-content">
+
+  <!-- MAP TAB -->
+  <div id="tab-map">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Active Job Map</span>
+        <div class="map-legend" id="mapLegend"></div>
+      </div>
+      <div id="map"></div>
+    </div>
+  </div>
+
+  <!-- LIST TAB -->
+  <div id="tab-list" class="hidden">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Jobs</span>
+        <div class="toolbar">
+          <div class="search-box">
+            <span class="icon">🔍</span>
+            <input class="form-input" id="searchInput" placeholder="Search name, number, or address…" oninput="App.renderList()"/>
+          </div>
+          <select class="form-select" id="statusFilter" style="width:auto" onchange="App.renderList()">
+            <option value="all">All statuses</option>
+          </select>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="job-list" id="jobList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD TAB -->
+  <div id="tab-add" class="hidden">
+    <div class="card" style="max-width:760px;margin:0 auto">
+      <div class="card-header"><span class="card-title">Add a Single Job</span></div>
+      <div class="card-body">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Job Name <span class="req">*</span></label>
+            <input class="form-input" id="f_name" placeholder="e.g. Sunset Ridge Phase 2"/>
+            <div class="form-error hidden" id="e_name">Job name is required</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Job Number</label>
+            <input class="form-input" id="f_jobnum" placeholder="Internal #"/>
+          </div>
+          <div class="form-group full">
+            <label class="form-label">Street Address <span class="req">*</span></label>
+            <input class="form-input" id="f_address" placeholder="123 Main St"/>
+            <div class="form-error hidden" id="e_address">Street address is required</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">City <span class="req">*</span></label>
+            <input class="form-input" id="f_city" placeholder="San Diego"/>
+            <div class="form-error hidden" id="e_city">City is required</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">State <span class="req">*</span></label>
+            <input class="form-input" id="f_state" placeholder="CA" maxlength="20"/>
+            <div class="form-error hidden" id="e_state">State is required</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">ZIP</label>
+            <input class="form-input" id="f_zip" placeholder="92101"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Status</label>
+            <select class="form-select" id="f_status"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Superintendent / Contact</label>
+            <input class="form-input" id="f_contact" placeholder="Optional"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Start Date</label>
+            <input class="form-input" id="f_start" type="date"/>
+          </div>
+          <div class="form-group full">
+            <label class="form-label">Notes</label>
+            <textarea class="form-input" id="f_notes" placeholder="Optional notes…"></textarea>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div class="row-gap" style="justify-content:flex-end">
+          <span class="form-hint" id="addHint" style="margin-right:auto"></span>
+          <button class="btn btn-secondary" onclick="App.clearAddForm()">Clear</button>
+          <button class="btn btn-primary" id="addBtn" onclick="App.submitAdd()">Geocode &amp; Add Job</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- IMPORT TAB -->
+  <div id="tab-import" class="hidden">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Bulk Import from Excel</span>
+        <button class="btn btn-secondary btn-sm" onclick="Importer.downloadTemplate()">⬇ Download Template</button>
+      </div>
+      <div class="card-body">
+        <div class="import-steps" id="importSteps">
+          <div class="istep active" data-step="1"><span class="num">1</span> Upload</div>
+          <span class="arrow">→</span>
+          <div class="istep" data-step="2"><span class="num">2</span> Validate &amp; Geocode</div>
+          <span class="arrow">→</span>
+          <div class="istep" data-step="3"><span class="num">3</span> Fix Exceptions</div>
+          <span class="arrow">→</span>
+          <div class="istep" data-step="4"><span class="num">4</span> Import</div>
+        </div>
+
+        <!-- Step 1: upload -->
+        <div id="imp-upload">
+          <div class="dropzone" id="dropzone" onclick="document.getElementById('fileInput').click()">
+            <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 16V4m0 0L8 8m4-4l4 4"/><path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+            <h3>Drop your project spreadsheet here</h3>
+            <p>or click to browse — .xlsx or .csv. Use the standard template for best results.</p>
+            <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" class="hidden" onchange="Importer.handleFile(this.files[0])"/>
+          </div>
+          <p class="form-hint" style="margin-top:12px">Importing into division: <strong id="impDivLabel"></strong>. Rows with a <em>Division Code</em> column override this per row.</p>
+        </div>
+
+        <!-- Step 2: processing -->
+        <div id="imp-processing" class="hidden">
+          <p style="font-weight:600;margin-bottom:6px" id="procLabel">Geocoding addresses…</p>
+          <div class="progress"><div class="progress-bar" id="procBar"></div></div>
+          <p class="form-hint" id="procDetail"></p>
+        </div>
+
+        <!-- Step 3/4: review -->
+        <div id="imp-review" class="hidden">
+          <div class="summary-row" id="impSummary"></div>
+          <div id="impExceptionsWrap">
+            <div class="card-title" style="margin-bottom:10px">Rows needing attention</div>
+            <div style="overflow-x:auto"><table class="tbl" id="impExceptions"></table></div>
+            <p class="form-hint" style="margin-top:10px">Fix the address and press <strong>Re-geocode</strong>, enter coordinates manually, or skip the row. Clean rows import automatically.</p>
+          </div>
+          <div class="divider"></div>
+          <div class="row-gap" style="justify-content:flex-end">
+            <span id="impCommitHint" class="form-hint" style="margin-right:auto"></span>
+            <button class="btn btn-secondary" onclick="Importer.reset()">Cancel</button>
+            <button class="btn btn-primary" id="impCommitBtn" onclick="Importer.commit()">Import Jobs</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Confirm modal -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h3 id="modalTitle">Confirm</h3>
+    <p id="modalText"></p>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="UI.closeModal()">Cancel</button>
+      <button class="btn btn-danger" id="modalConfirm">Delete</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-wrap"></div>
+
+<script>
+/* ============================================================
+   CONFIG — divisions, statuses, template
+   ============================================================ */
+const DIVISIONS = [
+  {code:'BLKSAN', name:'San Diego'},
+  {code:'BLKONT', name:'Fontana'},
+  {code:'BLKDEN', name:'Denver'},
+  {code:'BLKPHX', name:'Phoenix'},
+  {code:'BLKLVK', name:'Livermore'},
+  {code:'BLKSMF', name:'Sacramento'},
+  {code:'BLKSCK', name:'Stockton'},
+  {code:'BLKFAT', name:'Fresno'},
+  {code:'BLKABQ', name:'New Mexico'},
+  {code:'BLKRNO', name:'Reno'},      // code inferred — confirm
+  {code:'BLKTUS', name:'Tucson'},    // code inferred — confirm
+  {code:'BLKVIS', name:'Visalia'},   // code inferred — confirm
+];
+const DIVISION_CODES = DIVISIONS.map(d=>d.code);
+
+const STATUSES = [
+  {key:'active',    label:'Active',    color:'#16A34A', badgeBg:'#DCFCE7', badgeFg:'#166534'},
+  {key:'upcoming',  label:'Upcoming',  color:'#2563EB', badgeBg:'#DBEAFE', badgeFg:'#1E40AF'},
+  {key:'onhold',    label:'On Hold',   color:'#EAB308', badgeBg:'#FEF9C3', badgeFg:'#92400E'},
+  {key:'completed', label:'Completed', color:'#6E7489', badgeBg:'#ECEEF4', badgeFg:'#3D4255'},
+];
+const statusByKey = k => STATUSES.find(s=>s.key===k) || STATUSES[0];
+function normalizeStatus(raw){
+  if(!raw) return 'active';
+  const s = String(raw).toLowerCase().replace(/[\s_-]/g,'');
+  if(s.startsWith('act')) return 'active';
+  if(s.startsWith('up')||s.startsWith('sched')||s.startsWith('pend')) return 'upcoming';
+  if(s.startsWith('hold')||s.startsWith('onhold')||s.startsWith('paus')) return 'onhold';
+  if(s.startsWith('comp')||s.startsWith('done')||s.startsWith('clos')||s.startsWith('fin')) return 'completed';
+  return null; // unknown
+}
+
+// Standard upload template columns (order matters for the generated .xlsx)
+const TEMPLATE_COLUMNS = [
+  'Job Name','Job Number','Address','City','State','Zip',
+  'Status','Superintendent','Start Date','Notes',
+  'Division Code','Latitude','Longitude'
+];
+
+/* ============================================================
+   STORE — data layer abstraction.
+   Currently backed by localStorage. Every method is async and
+   returns a Promise so the whole UI works unchanged when the
+   IT team swaps this object for WordPress REST / DB calls.
+   Replace the bodies below; keep the signatures.
+   ============================================================ */
+const Store = (() => {
+  const KEY = 'kenyoncore_jobtracker_v1';
+  function _load(){ try{ return JSON.parse(localStorage.getItem(KEY)) || {jobs:[]}; }catch(e){ return {jobs:[]}; } }
+  function _save(db){ localStorage.setItem(KEY, JSON.stringify(db)); }
+  const uid = () => 'j_' + Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+
+  return {
+    async listJobs(division){
+      const db = _load();
+      return db.jobs.filter(j => !division || j.division === division);
+    },
+    async addJob(job){
+      const db = _load();
+      const rec = Object.assign({ id: uid(), created: new Date().toISOString() }, job);
+      db.jobs.push(rec); _save(db); return rec;
+    },
+    async addJobsBulk(jobs){
+      const db = _load();
+      const recs = jobs.map(j => Object.assign({ id: uid(), created: new Date().toISOString() }, j));
+      db.jobs.push(...recs); _save(db); return recs;
+    },
+    async updateJob(id, patch){
+      const db = _load();
+      const j = db.jobs.find(x=>x.id===id); if(!j) return null;
+      Object.assign(j, patch); _save(db); return j;
+    },
+    async deleteJob(id){
+      const db = _load();
+      db.jobs = db.jobs.filter(x=>x.id!==id); _save(db); return true;
+    },
+  };
+})();
+
+/* ============================================================
+   GEOCODER — address -> {lat,lng}. Provider-based so a Google
+   key can drop in later without touching callers. Default is
+   OpenStreetMap Nominatim (free, no key). Includes a throttled
+   queue (Nominatim policy: <=1 req/sec) and an in-memory cache.
+   ============================================================ */
+const Geocoder = (() => {
+  const cache = {};
+  let chain = Promise.resolve();
+  const MIN_GAP = 1100; // ms between Nominatim calls
+  let lastCall = 0;
+
+  async function nominatim(q){
+    const url = 'https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=1&countrycodes=us&q=' + encodeURIComponent(q);
+    const res = await fetch(url, { headers:{ 'Accept':'application/json' } });
+    if(!res.ok) throw new Error('Geocoder HTTP '+res.status);
+    const data = await res.json();
+    if(!data.length) return null;
+    const r = data[0];
+    // crude confidence: house/road-level matches are "high"
+    const cat = (r.addresstype||r.type||'').toLowerCase();
+    const precise = ['house','building','residential','road','place','address'].some(t=>cat.includes(t)) || !!(r.address&&(r.address.house_number||r.address.road));
+    return { lat:+r.lat, lng:+r.lon, label:r.display_name, confidence: precise?'high':'low' };
+  }
+
+  // Active provider — swap to a google() implementation here later.
+  const provider = nominatim;
+
+  function throttled(q){
+    chain = chain.then(async () => {
+      const wait = Math.max(0, MIN_GAP - (Date.now()-lastCall));
+      if(wait) await new Promise(r=>setTimeout(r,wait));
+      lastCall = Date.now();
+      return provider(q);
+    });
+    return chain;
+  }
+
+  return {
+    async geocode(q){
+      const key = q.trim().toLowerCase();
+      if(!key) return null;
+      if(cache[key]!==undefined) return cache[key];
+      try{
+        const r = await throttled(q);
+        cache[key] = r; return r;
+      }catch(e){ console.warn('geocode failed', e); return undefined; } // undefined = error (retryable)
+    },
+    primeCache(q, val){ cache[q.trim().toLowerCase()] = val; }
+  };
+})();
+
+function fullAddress(parts){
+  return [parts.address, parts.city, parts.state, parts.zip].filter(Boolean).join(', ');
+}
+
+/* ============================================================
+   UI helpers — toast, modal
+   ============================================================ */
+const UI = {
+  toast(msg, kind='ok', ms=3200){
+    const el = document.createElement('div');
+    el.className = 'toast ' + kind;
+    el.textContent = msg;
+    document.getElementById('toast-wrap').appendChild(el);
+    setTimeout(()=>{ el.style.opacity='0'; el.style.transition='opacity .3s'; setTimeout(()=>el.remove(),300); }, ms);
+  },
+  confirm(title, text, onYes, btnLabel='Delete'){
+    document.getElementById('modalTitle').textContent = title;
+    document.getElementById('modalText').textContent = text;
+    const b = document.getElementById('modalConfirm');
+    b.textContent = btnLabel;
+    b.onclick = () => { UI.closeModal(); onYes(); };
+    document.getElementById('modalBg').classList.add('show');
+  },
+  closeModal(){ document.getElementById('modalBg').classList.remove('show'); }
+};
+function statusBadge(key){
+  const s = statusByKey(key);
+  return `<span class="badge" style="background:${s.badgeBg};color:${s.badgeFg}">${s.label}</span>`;
+}
+function directionsUrl(j){
+  if(j.lat && j.lng) return `https://www.google.com/maps/dir/?api=1&destination=${j.lat},${j.lng}`;
+  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(fullAddress(j))}`;
+}
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function fmtDate(iso){ if(!iso) return ''; const d=new Date(iso); return isNaN(d)?'':d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
+
+/* ============================================================
+   APP — state, tabs, dashboard, map, list, add
+   ============================================================ */
+const App = (() => {
+  let division = DIVISIONS[0].code;
+  let tab = 'map';
+  let jobs = [];           // jobs for current division
+  let map, cluster;
+
+  async function refresh(){
+    jobs = await Store.listJobs(division);
+    renderStats();
+    if(tab==='map') renderMap();
+    if(tab==='list') renderList();
+    document.getElementById('impDivLabel').textContent = divLabel(division);
+  }
+
+  function divLabel(code){ const d=DIVISIONS.find(x=>x.code===code); return d ? `${d.name} (${d.code})` : code; }
+
+  function renderStats(){
+    const counts = { total: jobs.length };
+    STATUSES.forEach(s => counts[s.key] = jobs.filter(j=>j.status===s.key).length);
+    const cards = [
+      {label:'Total Jobs', value:counts.total, color:'var(--accent)'},
+      ...STATUSES.map(s => ({label:s.label, value:counts[s.key], color:s.color}))
+    ];
+    document.getElementById('stats').innerHTML = cards.map(c=>`
+      <div class="stat-card">
+        <span class="dot" style="background:${c.color}"></span>
+        <div class="stat-value">${c.value}</div>
+        <div class="stat-label">${c.label}</div>
+      </div>`).join('');
+  }
+
+  /* ---- MAP ---- */
+  function ensureMap(){
+    if(map) return;
+    map = L.map('map', { zoomControl:true }).setView([36.5,-114.0], 5);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      attribution:'&copy; OpenStreetMap &copy; CARTO', maxZoom:19, subdomains:'abcd'
+    }).addTo(map);
+    cluster = L.markerClusterGroup({ showCoverageOnHover:false, maxClusterRadius:45 });
+    map.addLayer(cluster);
+    // legend
+    document.getElementById('mapLegend').innerHTML = STATUSES.map(s=>
+      `<span class="legend-item"><span class="legend-dot" style="background:${s.color}"></span>${s.label}</span>`).join('');
+  }
+  function renderMap(){
+    ensureMap();
+    setTimeout(()=>map.invalidateSize(), 50);
+    cluster.clearLayers();
+    const pts = [];
+    jobs.filter(j=>j.lat&&j.lng).forEach(j=>{
+      const s = statusByKey(j.status);
+      const icon = L.divIcon({ className:'', html:`<div class="marker-pin" style="background:${s.color}"></div>`, iconSize:[18,18], iconAnchor:[9,9] });
+      const m = L.marker([j.lat,j.lng], {icon});
+      m.bindPopup(`
+        <div class="popup-name">${esc(j.name)}</div>
+        <div class="popup-meta">${esc(fullAddress(j))}</div>
+        <div>${statusBadge(j.status)}</div>
+        ${j.notes?`<div class="popup-notes">${esc(j.notes)}</div>`:''}
+        <a class="btn btn-primary btn-sm" style="margin-top:8px" href="${directionsUrl(j)}" target="_blank">Get Directions →</a>
+      `);
+      cluster.addLayer(m); pts.push([j.lat,j.lng]);
+    });
+    if(pts.length){ try{ map.fitBounds(pts, {padding:[50,50], maxZoom:14}); }catch(e){} }
+  }
+
+  /* ---- LIST ---- */
+  function renderList(){
+    const q = document.getElementById('searchInput').value.trim().toLowerCase();
+    const sf = document.getElementById('statusFilter').value;
+    let rows = jobs.slice().sort((a,b)=> (b.created||'').localeCompare(a.created||''));
+    if(sf!=='all') rows = rows.filter(j=>j.status===sf);
+    if(q) rows = rows.filter(j => (j.name+' '+(j.jobNumber||'')+' '+fullAddress(j)).toLowerCase().includes(q));
+    const wrap = document.getElementById('jobList');
+    if(!rows.length){
+      wrap.innerHTML = `<div class="empty"><h3>No jobs found</h3><p>${jobs.length?'Try adjusting your search or filter.':'Add a job or run a bulk import to get started.'}</p></div>`;
+      return;
+    }
+    wrap.innerHTML = rows.map(j=>{
+      const s = statusByKey(j.status);
+      return `<div class="job-item" id="ji_${j.id}">
+        <div class="job-head" onclick="App.toggleJob('${j.id}')">
+          <div class="job-status-bar" style="background:${s.color}"></div>
+          <div class="job-info">
+            <div class="job-name">${esc(j.name)} ${j.jobNumber?`<span class="job-jobnum">#${esc(j.jobNumber)}</span>`:''}</div>
+            <div class="job-addr">${esc(fullAddress(j))||'<em>No address</em>'}</div>
+          </div>
+          <div class="job-right">
+            ${statusBadge(j.status)}
+            <span class="job-date">${fmtDate(j.created)}</span>
+            <span class="chevron">›</span>
+          </div>
+        </div>
+        <div class="job-detail">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Status</label>
+              <select class="form-select" onchange="App.updateField('${j.id}','status',this.value)">
+                ${STATUSES.map(st=>`<option value="${st.key}" ${st.key===j.status?'selected':''}>${st.label}</option>`).join('')}
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Superintendent</label>
+              <input class="form-input" value="${esc(j.contact||'')}" onchange="App.updateField('${j.id}','contact',this.value)"/>
+            </div>
+            <div class="form-group full">
+              <label class="form-label">Notes <span class="note-saved" id="ns_${j.id}">✓ saved</span></label>
+              <textarea class="form-input" onchange="App.updateField('${j.id}','notes',this.value,true)">${esc(j.notes||'')}</textarea>
+            </div>
+          </div>
+          <div class="row-gap" style="margin-top:14px;justify-content:space-between">
+            <a class="btn btn-secondary btn-sm" href="${directionsUrl(j)}" target="_blank">📍 Directions</a>
+            <button class="btn btn-danger btn-sm" onclick="App.deleteJob('${j.id}','${esc(j.name).replace(/'/g,"\\'")}')">Delete Job</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  function toggleJob(id){ document.getElementById('ji_'+id).classList.toggle('open'); }
+  async function updateField(id, field, val, flash){
+    await Store.updateJob(id, {[field]: val});
+    const i = jobs.findIndex(j=>j.id===id); if(i>=0) jobs[i][field]=val;
+    if(field==='status'){ renderStats(); renderList(); }
+    if(flash){ const n=document.getElementById('ns_'+id); if(n){ n.classList.add('show'); setTimeout(()=>n.classList.remove('show'),1500);} }
+  }
+  function deleteJob(id, name){
+    UI.confirm('Delete job?', `“${name}” will be permanently removed. This can’t be undone.`, async ()=>{
+      await Store.deleteJob(id); UI.toast('Job deleted','ok'); refresh();
+    });
+  }
+
+  /* ---- ADD ---- */
+  function clearAddForm(){
+    ['f_name','f_jobnum','f_address','f_city','f_state','f_zip','f_contact','f_start','f_notes'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('f_status').value='active';
+    ['e_name','e_address','e_city','e_state'].forEach(id=>document.getElementById(id).classList.add('hidden'));
+  }
+  async function submitAdd(){
+    const v = id => document.getElementById(id).value.trim();
+    const fields = { name:v('f_name'), address:v('f_address'), city:v('f_city'), state:v('f_state') };
+    let ok=true;
+    [['name','e_name'],['address','e_address'],['city','e_city'],['state','e_state']].forEach(([f,e])=>{
+      const bad=!fields[f]; document.getElementById(e).classList.toggle('hidden',!bad); if(bad) ok=false;
+    });
+    if(!ok){ UI.toast('Please fill in the required fields','err'); return; }
+    const btn=document.getElementById('addBtn'); btn.disabled=true; btn.textContent='Geocoding…';
+    const hint=document.getElementById('addHint');
+    const job = {
+      division, name:fields.name, jobNumber:v('f_jobnum'),
+      address:fields.address, city:fields.city, state:fields.state, zip:v('f_zip'),
+      status:document.getElementById('f_status').value, contact:v('f_contact'),
+      startDate:v('f_start'), notes:v('f_notes')
+    };
+    hint.textContent='Looking up address…';
+    const geo = await Geocoder.geocode(fullAddress(job));
+    if(geo===undefined){ UI.toast('Geocoding service error — try again','err'); btn.disabled=false; btn.textContent='Geocode & Add Job'; hint.textContent=''; return; }
+    if(geo===null){
+      UI.confirm('Address not found','We couldn’t locate that address on the map. Add the job anyway? You can fix the location later.', async ()=>{
+        await Store.addJob(job); UI.toast('Job added (no map location)','warn'); clearAddForm(); App.switchTab('list'); refresh();
+      }, 'Add Anyway');
+      btn.disabled=false; btn.textContent='Geocode & Add Job'; hint.textContent=''; return;
+    }
+    job.lat=geo.lat; job.lng=geo.lng; job.geoConfidence=geo.confidence;
+    await Store.addJob(job);
+    UI.toast('Job added ✓','ok'); clearAddForm();
+    btn.disabled=false; btn.textContent='Geocode & Add Job'; hint.textContent='';
+    App.switchTab('map'); refresh();
+  }
+
+  /* ---- TABS ---- */
+  const TITLES = { map:'Map', list:'Jobs', add:'Add Job', import:'Bulk Import' };
+  function switchTab(t){
+    tab=t;
+    ['map','list','add','import'].forEach(x=>document.getElementById('tab-'+x).classList.toggle('hidden',x!==t));
+    document.querySelectorAll('.topnav-tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
+    document.getElementById('pageTitle').textContent = TITLES[t];
+    document.getElementById('pageSub').textContent = divLabel(division);
+    if(t==='map') renderMap();
+    if(t==='list') renderList();
+  }
+  function onDivisionChange(code){ division=code; clearAddForm(); refresh(); switchTab(tab); }
+
+  function init(){
+    // populate division selector
+    document.getElementById('divisionSelect').innerHTML =
+      DIVISIONS.map(d=>`<option value="${d.code}">${d.name} — ${d.code}</option>`).join('');
+    // status dropdowns
+    document.getElementById('f_status').innerHTML = STATUSES.map(s=>`<option value="${s.key}">${s.label}</option>`).join('');
+    document.getElementById('statusFilter').innerHTML = '<option value="all">All statuses</option>' +
+      STATUSES.map(s=>`<option value="${s.key}">${s.label}</option>`).join('');
+    document.getElementById('pageSub').textContent = divLabel(division);
+    document.getElementById('impDivLabel').textContent = divLabel(division);
+    Importer.initDropzone();
+    refresh();
+  }
+
+  return { init, switchTab, onDivisionChange, refresh, renderList, renderMap,
+           toggleJob, updateField, deleteJob, clearAddForm, submitAdd,
+           getDivision:()=>division };
+})();
+
+/* ============================================================
+   IMPORTER — Excel template + bulk import pipeline
+   ============================================================ */
+const Importer = (() => {
+  let parsed = [];   // [{row, data:{...}, issues:[], status:'ready'|'exception'|'skip', geo:{}}]
+
+  /* ---- Template generation ---- */
+  function downloadTemplate(){
+    const wb = XLSX.utils.book_new();
+
+    // Projects sheet
+    const header = TEMPLATE_COLUMNS;
+    const example = ['Sunset Ridge Phase 2','24-1057','123 Main St','San Diego','CA','92101','Active','J. Martinez','2026-07-01','Stucco + lath, 3 buildings','BLKSAN','',''];
+    const ws = XLSX.utils.aoa_to_sheet([header, example]);
+    ws['!cols'] = header.map(h=>({wch: Math.max(12, h.length+4)}));
+    // style header row
+    header.forEach((h,i)=>{
+      const ref = XLSX.utils.encode_cell({r:0,c:i});
+      ws[ref].s = { font:{bold:true,color:{rgb:'FFFFFF'}}, fill:{fgColor:{rgb:'1B3A6B'}}, alignment:{horizontal:'center'} };
+    });
+    XLSX.utils.book_append_sheet(wb, ws, 'Projects');
+
+    // Instructions sheet
+    const info = [
+      ['KenyonCore Job Tracker — Standard Import Template',''],
+      ['',''],
+      ['Required columns','Job Name, Address, City, State'],
+      ['Optional columns','Job Number, Zip, Status, Superintendent, Start Date, Notes, Division Code, Latitude, Longitude'],
+      ['',''],
+      ['Valid Status values', STATUSES.map(s=>s.label).join(' / ') + '  (blank = Active)'],
+      ['',''],
+      ['Division Code','Optional. If blank, rows import into the division selected in the app.'],
+      ['',''],
+      ['Valid Division Codes',''],
+      ...DIVISIONS.map(d=>[d.code, d.name]),
+      ['',''],
+      ['Latitude / Longitude','Leave blank — the app geocodes the address automatically. Only fill these to override the map pin.'],
+    ];
+    const wi = XLSX.utils.aoa_to_sheet(info);
+    wi['!cols']=[{wch:24},{wch:60}];
+    wi['A1'].s={font:{bold:true,sz:14,color:{rgb:'1B3A6B'}}};
+    XLSX.utils.book_append_sheet(wb, wi, 'Instructions');
+
+    XLSX.writeFile(wb, 'KenyonCore_JobTracker_Template.xlsx');
+    UI.toast('Template downloaded','ok');
+  }
+
+  /* ---- Dropzone ---- */
+  function initDropzone(){
+    const dz=document.getElementById('dropzone');
+    ['dragenter','dragover'].forEach(e=>dz.addEventListener(e,ev=>{ev.preventDefault();dz.classList.add('drag');}));
+    ['dragleave','drop'].forEach(e=>dz.addEventListener(e,ev=>{ev.preventDefault();dz.classList.remove('drag');}));
+    dz.addEventListener('drop',ev=>{ const f=ev.dataTransfer.files[0]; if(f) handleFile(f); });
+  }
+
+  /* ---- Column mapping (case/space-insensitive) ---- */
+  const COLMAP = {
+    'job name':'name','jobname':'name','project':'name','name':'name','job':'name',
+    'job number':'jobNumber','jobnumber':'jobNumber','job #':'jobNumber','number':'jobNumber','job no':'jobNumber',
+    'address':'address','street':'address','street address':'address','address1':'address',
+    'city':'city','state':'state','st':'state',
+    'zip':'zip','zip code':'zip','zipcode':'zip','postal':'zip','postal code':'zip',
+    'status':'status','superintendent':'contact','super':'contact','contact':'contact','foreman':'contact',
+    'start date':'startDate','start':'startDate','startdate':'startDate',
+    'notes':'notes','note':'notes','description':'notes','comments':'notes',
+    'division code':'divCode','division':'divCode','divisioncode':'divCode','div':'divCode',
+    'latitude':'lat','lat':'lat','longitude':'lng','lng':'lng','long':'lng','lon':'lng'
+  };
+
+  async function handleFile(file){
+    if(!file) return;
+    const buf = await file.arrayBuffer();
+    let wb;
+    try{ wb = XLSX.read(buf, {type:'array'}); }
+    catch(e){ UI.toast('Could not read that file','err'); return; }
+    // prefer a "Projects" sheet, else first
+    const sheetName = wb.SheetNames.find(n=>/project/i.test(n)) || wb.SheetNames[0];
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], {defval:''});
+    if(!rows.length){ UI.toast('No data rows found in the sheet','err'); return; }
+    buildRows(rows);
+    await processRows();
+  }
+
+  function buildRows(rawRows){
+    parsed = rawRows.map((raw, idx) => {
+      const data = {};
+      Object.keys(raw).forEach(k=>{
+        const key = COLMAP[String(k).trim().toLowerCase()];
+        if(key) data[key] = typeof raw[k]==='string'?raw[k].trim():raw[k];
+      });
+      return { row: idx+2, data, issues:[], geo:null, status:'pending', skip:false };
+    });
+  }
+
+  function validateRow(r){
+    const d=r.data; r.issues=[];
+    // required
+    ['name','address','city','state'].forEach(f=>{ if(!d[f]||String(d[f]).trim()==='') r.issues.push({t:'err',f,msg:`Missing ${f}`}); });
+    // status
+    if(d.status){
+      const ns=normalizeStatus(d.status);
+      if(ns===null){ r.issues.push({t:'warn',f:'status',msg:`Unknown status “${d.status}” → Active`}); d.status='active'; }
+      else d.status=ns;
+    } else d.status='active';
+    // division
+    let div = (d.divCode||'').toString().trim().toUpperCase();
+    if(div){
+      if(!DIVISION_CODES.includes(div)) r.issues.push({t:'err',f:'divCode',msg:`Unknown division code “${div}”`});
+      else d.division=div;
+    } else d.division=App.getDivision();
+  }
+
+  async function processRows(){
+    showStep(2);
+    setStepUI('processing');
+    document.getElementById('procLabel').textContent='Validating rows…';
+    parsed.forEach(validateRow);
+
+    // rows needing geocoding (no manual lat/lng, no blocking required-field error on address)
+    const toGeo = parsed.filter(r => !(r.data.lat&&r.data.lng) && r.data.address && r.data.city && r.data.state);
+    const bar=document.getElementById('procBar'), detail=document.getElementById('procDetail');
+    document.getElementById('procLabel').textContent='Geocoding addresses…';
+    let done=0;
+    for(const r of toGeo){
+      detail.textContent = `${done+1} of ${toGeo.length} — ${fullAddress(r.data)}`;
+      const geo = await Geocoder.geocode(fullAddress(r.data));
+      if(geo===undefined) r.issues.push({t:'err',f:'geo',msg:'Geocoder error — retry'});
+      else if(geo===null) r.issues.push({t:'err',f:'geo',msg:'Address not found'});
+      else{
+        r.geo=geo; r.data.lat=geo.lat; r.data.lng=geo.lng; r.data.geoConfidence=geo.confidence;
+        if(geo.confidence==='low') r.issues.push({t:'warn',f:'geo',msg:'Low-confidence match — verify pin'});
+      }
+      done++; bar.style.width = Math.round(done/toGeo.length*100)+'%';
+    }
+    // manual lat/lng rows
+    parsed.filter(r=>r.data.lat&&r.data.lng&&!r.geo).forEach(r=>{ r.data.lat=+r.data.lat; r.data.lng=+r.data.lng; });
+
+    classify();
+    renderReview();
+  }
+
+  function classify(){
+    parsed.forEach(r=>{
+      const hasErr = r.issues.some(i=>i.t==='err');
+      r.status = hasErr ? 'exception' : 'ready';
+    });
+  }
+
+  function renderReview(){
+    showStep(3);
+    setStepUI('review');
+    const ready = parsed.filter(r=>r.status==='ready'&&!r.skip);
+    const warns = ready.filter(r=>r.issues.some(i=>i.t==='warn'));
+    const exceptions = parsed.filter(r=>r.status==='exception'&&!r.skip);
+    const skipped = parsed.filter(r=>r.skip);
+
+    document.getElementById('impSummary').innerHTML = `
+      <div class="summary-pill sp-ok"><span class="n">${ready.length}</span> ready to import</div>
+      ${warns.length?`<div class="summary-pill sp-warn"><span class="n">${warns.length}</span> low-confidence (will import)</div>`:''}
+      <div class="summary-pill ${exceptions.length?'sp-err':'sp-ok'}"><span class="n">${exceptions.length}</span> need attention</div>
+      ${skipped.length?`<div class="summary-pill"><span class="n">${skipped.length}</span> skipped</div>`:''}
+    `;
+
+    const wrap=document.getElementById('impExceptionsWrap');
+    if(!exceptions.length){
+      wrap.innerHTML = `<div class="empty" style="padding:30px"><h3>🎉 No exceptions</h3><p>All ${ready.length} rows geocoded cleanly and are ready to import.</p></div>`;
+    } else {
+      wrap.classList.remove('hidden');
+      const tbl=document.getElementById('impExceptions');
+      tbl.innerHTML = `<thead><tr>
+          <th>Row</th><th>Job Name</th><th>Address</th><th>City</th><th>State</th><th>Zip</th>
+          <th>Lat</th><th>Lng</th><th>Issues</th><th></th></tr></thead>
+        <tbody>${exceptions.map(r=>exceptionRow(r)).join('')}</tbody>`;
+    }
+    updateCommitHint();
+  }
+
+  function exceptionRow(r){
+    const i = parsed.indexOf(r);
+    const tags = r.issues.map(x=>`<span class="issue-tag ${x.t==='warn'?'warn':''}">${esc(x.msg)}</span>`).join('');
+    return `<tr id="exr_${i}">
+      <td style="color:var(--gray-400);font-family:monospace">${r.row}</td>
+      <td><input value="${esc(r.data.name||'')}" onchange="Importer.edit(${i},'name',this.value)"/></td>
+      <td><input value="${esc(r.data.address||'')}" onchange="Importer.edit(${i},'address',this.value)"/></td>
+      <td><input value="${esc(r.data.city||'')}" onchange="Importer.edit(${i},'city',this.value)"/></td>
+      <td><input style="width:60px" value="${esc(r.data.state||'')}" onchange="Importer.edit(${i},'state',this.value)"/></td>
+      <td><input style="width:70px" value="${esc(r.data.zip||'')}" onchange="Importer.edit(${i},'zip',this.value)"/></td>
+      <td><input style="width:90px" value="${esc(r.data.lat||'')}" onchange="Importer.edit(${i},'lat',this.value)"/></td>
+      <td><input style="width:90px" value="${esc(r.data.lng||'')}" onchange="Importer.edit(${i},'lng',this.value)"/></td>
+      <td>${tags}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-secondary btn-sm" onclick="Importer.regeocode(${i})">↻ Re-geocode</button>
+        <button class="btn btn-ghost btn-sm" onclick="Importer.skipRow(${i})">Skip</button>
+      </td>
+    </tr>`;
+  }
+
+  function edit(i, field, val){
+    parsed[i].data[field] = ['lat','lng'].includes(field) ? (val===''?'':+val) : val;
+  }
+  async function regeocode(i){
+    const r=parsed[i];
+    // clear geo-related issues & manual coords if address changed
+    r.issues = r.issues.filter(x=>x.f!=='geo');
+    validateRow(r); // re-check required + division
+    if(!r.data.lat || !r.data.lng){
+      if(r.data.address&&r.data.city&&r.data.state){
+        const geo=await Geocoder.geocode(fullAddress(r.data));
+        if(geo===undefined) r.issues.push({t:'err',f:'geo',msg:'Geocoder error — retry'});
+        else if(geo===null) r.issues.push({t:'err',f:'geo',msg:'Still not found'});
+        else { r.geo=geo; r.data.lat=geo.lat; r.data.lng=geo.lng; if(geo.confidence==='low') r.issues.push({t:'warn',f:'geo',msg:'Low-confidence match'}); }
+      }
+    }
+    classify(); renderReview();
+    if(r.status==='ready') UI.toast(`Row ${r.row} fixed ✓`,'ok');
+  }
+  function skipRow(i){ parsed[i].skip=true; renderReview(); }
+
+  function updateCommitHint(){
+    const ready = parsed.filter(r=>(r.status==='ready')&&!r.skip);
+    const ex = parsed.filter(r=>r.status==='exception'&&!r.skip).length;
+    const btn=document.getElementById('impCommitBtn');
+    btn.textContent = `Import ${ready.length} Job${ready.length===1?'':'s'}`;
+    btn.disabled = ready.length===0;
+    document.getElementById('impCommitHint').textContent =
+      ex ? `${ex} row${ex===1?'':'s'} still need attention and will be left out.` : '';
+  }
+
+  async function commit(){
+    const ready = parsed.filter(r=>r.status==='ready'&&!r.skip).map(r=>{
+      const d=r.data;
+      return { division:d.division, name:d.name, jobNumber:d.jobNumber||'', address:d.address,
+               city:d.city, state:d.state, zip:d.zip||'', status:d.status, contact:d.contact||'',
+               startDate:d.startDate||'', notes:d.notes||'',
+               lat:d.lat||null, lng:d.lng||null, geoConfidence:d.geoConfidence||null };
+    });
+    if(!ready.length) return;
+    await Store.addJobsBulk(ready);
+    showStep(4);
+    UI.toast(`Imported ${ready.length} job${ready.length===1?'':'s'} ✓`,'ok');
+    reset();
+    App.switchTab('map'); App.refresh();
+  }
+
+  function reset(){
+    parsed=[]; document.getElementById('fileInput').value='';
+    document.getElementById('procBar').style.width='0';
+    setStepUI('upload'); showStep(1);
+  }
+
+  function setStepUI(which){
+    document.getElementById('imp-upload').classList.toggle('hidden', which!=='upload');
+    document.getElementById('imp-processing').classList.toggle('hidden', which!=='processing');
+    document.getElementById('imp-review').classList.toggle('hidden', which!=='review');
+  }
+  function showStep(n){
+    document.querySelectorAll('#importSteps .istep').forEach(el=>{
+      const s=+el.dataset.step;
+      el.classList.toggle('active', s===n);
+      el.classList.toggle('done', s<n);
+    });
+  }
+
+  return { downloadTemplate, initDropzone, handleFile, edit, regeocode, skipRow, commit, reset };
+})();
+
+// boot
+window.addEventListener('DOMContentLoaded', App.init);
+</script>
+</body>
+</html>
